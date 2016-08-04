@@ -10,7 +10,7 @@ from matplotlib import cm
 # Read PDE solution from VTK
 # Reference: http://stackoverflow.com/questions/23138112/vtk-to-maplotlib-using-numpy
 reader = vtk.vtkUnstructuredGridReader()
-reader.SetFileName("PDE/run/solution.0.10.vtk")
+reader.SetFileName("../PDE/run/solution.0.10.vtk")
 reader.Update()
 nodes = vtk_to_numpy(reader.GetOutput().GetPoints().GetData())
 u = vtk_to_numpy(reader.GetOutput().GetPointData().GetArray(0))
@@ -37,6 +37,6 @@ plt.subplot(1, 1, 1)
 plt.pcolor(XI, YI, UI, cmap=cm.jet)
 plt.scatter(x, y, 10, u, cmap=cm.jet)
 plt.axis('equal')
-plt.title('RBF interpolation - multiquadrics')
+plt.title('Natural neighbor interpolation')
 plt.colorbar()
 plt.show()
