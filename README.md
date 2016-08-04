@@ -1,8 +1,9 @@
 # dimice-python
 
 #Dependencies
-Natural neighbor interpolation: https://github.com/matplotlib/natgrid
+-PDE model and solver: https://github.com/alexanderzimmerman/dimice-heat-dealii   
+-Natural neighbor interpolation: https://github.com/matplotlib/natgrid
 
     git clone git@github.com:matplotlib/natgrid.git
     cd natgrid
-    sudo python2.7 setup.py install
+    sudo pip install .
