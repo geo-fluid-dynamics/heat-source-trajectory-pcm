@@ -1,14 +1,15 @@
+from scipy.interpolate import Rbf
 from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 
 
-def plot_interpolant(field):
+def plot_nn_interpolant(data):
     # Interpolate data on to structured grid
-    x = field['XPosition']
-    y = field['YPosition']
-    u = field['Data']
+    x = data[:, 0]
+    y = data[:, 1]
+    u = data[:, 2]
     ni = 100
     xi = np.linspace(min(x), max(x), ni)
     yi = np.linspace(min(y), max(y), ni)
@@ -22,4 +23,26 @@ def plot_interpolant(field):
     plt.axis('equal')
     plt.title('Natural neighbor interpolation')
     plt.colorbar()
-    plt.show()
+    plt.draw()
+
+
+def plot_rbf_interpolant(data):
+    interpolant = Rbf(data[:, 0], data[:, 1], data[:, 2], function='multiquadric')
+    # Interpolate data on to structured grid
+    x = data[:, 0]
+    y = data[:, 1]
+    u = data[:, 2]
+    ni = 100
+    xi = np.linspace(min(x), max(x), ni)
+    yi = np.linspace(min(y), max(y), ni)
+    xi_grid, yi_grid = np.meshgrid(xi, yi)
+    ui_grid = interpolant(xi_grid, yi_grid)
+    # Plot the structured sample
+    plt.interactive(False)
+    plt.subplot(1, 1, 1)
+    plt.pcolor(xi_grid, yi_grid, ui_grid, cmap=cm.jet)
+    plt.scatter(x, y, 10, u, cmap=cm.jet)
+    plt.axis('equal')
+    plt.title('Multiquadric RBF interpolation')
+    plt.colorbar()
+    plt.draw()

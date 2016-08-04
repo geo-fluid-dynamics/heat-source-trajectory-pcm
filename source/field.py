@@ -1,11 +1,13 @@
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 import numpy as np
-import pandas
 import warnings
+import plots
+import pandas
+melt_temperature = 0
 
 
-def get_field(state):
+def get_data(state):
     solution_file_name = '../PDE/example_solution.vtk'
     warnings.warn("PDE solver not yet integrated; instead reading solution from "+solution_file_name)
     warnings.warn("Ignoring state "+str(state))
@@ -14,16 +16,18 @@ def get_field(state):
     reader.Update()
     nodes = vtk_to_numpy(reader.GetOutput().GetPoints().GetData())
     u = vtk_to_numpy(reader.GetOutput().GetPointData().GetArray(0))
-    field = pandas.DataFrame(data=np.column_stack((nodes[:, 0], nodes[:, 1], u)),
-                             columns=['XPosition', 'YPosition', 'Data'])
-    field = field.drop_duplicates()
-    return field
+    data = np.column_stack((nodes[:, 0], nodes[:, 1], u))
+    table = pandas.DataFrame(data=data)
+    table = table.drop_duplicates()
+    data = table.as_matrix()
+    return data
 
 
 def test():
-    field = get_field("../PDE/run/solution.0.10.vtk")
-    print(field)
-
+    state = (0., 0., 0.)
+    data = get_data(state)
+    plots.plot_nn_interpolant(data)
+    plots.plot_rbf_interpolant(data)
 
 if __name__ == "__main__":
     test()
