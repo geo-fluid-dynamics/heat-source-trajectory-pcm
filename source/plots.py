@@ -9,7 +9,7 @@ import field
 import body
 
 
-def plot_frame(interpolator, data, old_state, state):
+def plot_frame(interpolator, data, old_state, state, step):
     xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     ui = interpolator(xi_grid, yi_grid)
     plt.interactive(False)
@@ -19,15 +19,17 @@ def plot_frame(interpolator, data, old_state, state):
                      colors=('k', 'b'))
     plt.clabel(cp, inline=True, fontsize=10)
     points = body.get_hull_points(old_state)
-    plt.plot(points[:, 0], points[:, 1], '--y')
+    plt.plot(points[:, 0], points[:, 1], '--r', label='Old State')
     points = body.get_hull_points(state)
-    plt.plot(points[:, 0], points[:, 1], '--or')
+    plt.plot(points[:, 0], points[:, 1], '-or', label='Current State')
     plt.xlabel('x')
     plt.ylabel('y')
     plt.axis('equal')
     plt.xlim((-1., 1.))
     plt.ylim((-1., 1.5))
-    plt.show()
+    plt.legend()
+    plt.savefig('trajectory_frame_'+str(step))
+    plt.cla()
 
 
 def plot_contour_and_data(xi_grid, yi_grid, ui_grid, data):
