@@ -25,6 +25,8 @@ def plot_frame(interpolator, data, old_state, state):
     plt.xlabel('x')
     plt.ylabel('y')
     plt.axis('equal')
+    plt.xlim((-1., 1.))
+    plt.ylim((-1., 1.5))
     plt.show()
 
 

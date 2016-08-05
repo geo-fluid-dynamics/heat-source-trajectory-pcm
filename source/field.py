@@ -7,11 +7,8 @@ import parameter_file
 from subprocess import call
 
 
-melt_temperature = 0
-space_dims = 2
-nodes_per_cell = pow(2, space_dims)  # This doesn't consider hanging nodes
-temperature = -1
-material = {'name': 'water-ice', 'melting temperature': 0}
+temperature = -1.
+material = {'name': 'water-ice', 'melting temperature': 0.}
 
 
 def solve_pde(state):

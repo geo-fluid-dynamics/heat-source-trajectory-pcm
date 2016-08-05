@@ -8,7 +8,7 @@ boundary_values = {'hot temperature': 1., 'warm temperature': 0.1}
 def move(old_points, x):
     assert(x.size == 3)  # 2D
     theta = x[2]
-    rotation_matrix = np.matrix([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
+    rotation_matrix = np.matrix([[math.cos(theta), math.sin(theta)], [-math.sin(theta), math.cos(theta)]])
     # @todo: Is the rotation direction consistent with the deal.II parameter?
     points = np.matrix(old_points)*rotation_matrix
     points = points + x[:2]
