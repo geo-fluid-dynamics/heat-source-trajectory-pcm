@@ -1,4 +1,3 @@
-import interpolate_scattered
 from scipy import interpolate
 from scipy.optimize import minimize
 import numpy as np
@@ -22,6 +21,7 @@ def step_trajectory(initial_state):
     data = field.get_data(initial_state) - field.melt_temperature
     # Extrapolate constant values, because NaN's break SciPy.optimize.minimize
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=min(data[:, 2]))
+    plots.plot_interpolator_and_data(interpolator, data)
     # @todo: Try probing the solution directly with VTK instead.
     center_of_gravity = body.get_center_of_gravity()
 

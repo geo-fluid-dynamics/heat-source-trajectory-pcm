@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 import invdisttree
-from interpolate_structured import grid_sample_points
+import interpolate_structured
 
 
 def plot_contour_and_data(xi_grid, yi_grid, ui_grid, data):
@@ -20,10 +20,10 @@ def plot_contour_and_data(xi_grid, yi_grid, ui_grid, data):
 
 
 def plot_interpolator_and_data(interpolator, data):
-    xi_grid, yi_grid = grid_sample_points(data)
+    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     query_points = np.column_stack((xi_grid.flatten(), yi_grid.flatten()))
-    ui_grid = interpolator(query_points)
-    plot_contour_and_data(xi_grid, yi_grid, ui_grid.reshape(xi_grid.shape), data)
+    ui = interpolator(query_points)
+    plot_contour_and_data(xi_grid, yi_grid, ui.reshape(xi_grid.shape), data)
 
 
 def plot_linear_spline_interpolant(data):
