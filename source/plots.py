@@ -28,6 +28,7 @@ def plot_frame(interpolator, data, old_state, state, step):
     plt.xlim((-1., 1.))
     plt.ylim((-1., 1.5))
     plt.legend()
+    plt.title('Step '+str(step))
     plt.savefig('trajectory_frame_'+str(step))
     plt.cla()
 

@@ -19,7 +19,7 @@ def centroid(points):
     length = points.shape[0]
     sum_x = np.sum(points[:, 0])
     sum_y = np.sum(points[:, 1])
-    return sum_x/length, sum_y/length
+    return np.array((sum_x/length, sum_y/length))
 
 
 def get_hull_points(state=np.array((0., 0., 0.))):
@@ -31,7 +31,7 @@ def get_hull_points(state=np.array((0., 0., 0.))):
     return body_points
 
 
-def get_center_of_gravity():
+def get_center_of_gravity(state=np.array(0.)):
     # Assume uniform density within the body
-    body_points = get_hull_points()
+    body_points = get_hull_points(state)
     return centroid(body_points)

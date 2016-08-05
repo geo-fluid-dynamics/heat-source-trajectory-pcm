@@ -39,7 +39,7 @@ subsection Error Tables
 end
 subsection IDA Solver Parameters
   set Absolute error tolerance                      = 1e-4
-  set Final time                                    = 1
+  set Final time                                    = 0.2
   set Ignore algebraic terms for error computations = false
   set Initial condition Newton max iterations       = 5
   set Initial condition Newton parameter            = 0.33
@@ -84,7 +84,7 @@ subsection Refinement
 end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
-  set Max number of cells                            = 1000
+  set Max number of cells                            = 100
   set Enable finer preconditioner                    = false
   set Initial global refinement                      = 0
   set Jacobian solver tolerance                      = 1e-8

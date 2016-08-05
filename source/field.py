@@ -18,7 +18,7 @@ def solve_pde(state):
     # Run the PDE solver
     call(['../PDE/dimice-heat', parameter_file.run_input_path])
     # Read the solution
-    solution_file_path = 'solution.0.10.vtk'
+    solution_file_path = 'solution.0.1.vtk'
     reader = vtk.vtkUnstructuredGridReader()
     reader.SetFileName(solution_file_path)
     reader.Update()
