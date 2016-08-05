@@ -16,10 +16,10 @@ material = {'name': 'water-ice', 'melting temperature': 0}
 
 def solve_pde(state):
     # Prepare input file for PDE solver
-    copyfile(parameter_file.reference_path, parameter_file.path)
+    copyfile(parameter_file.reference_path, parameter_file.run_input_path)
     parameter_file.set_state(state)
     # Run the PDE solver
-    call(['../PDE/dimice-heat', parameter_file.path])
+    call(['../PDE/dimice-heat', parameter_file.run_input_path])
     # Read the solution
     solution_file_path = 'solution.0.10.vtk'
     reader = vtk.vtkUnstructuredGridReader()

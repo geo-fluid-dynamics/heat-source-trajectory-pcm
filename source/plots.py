@@ -9,7 +9,7 @@ import field
 import body
 
 
-def plot_state(interpolator, data, state):
+def plot_frame(interpolator, data, old_state, state):
     xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     ui = interpolator(xi_grid, yi_grid)
     plt.interactive(False)
@@ -18,6 +18,8 @@ def plot_state(interpolator, data, state):
                      (field.temperature, field.material['melting temperature']),
                      colors=('k', 'b'))
     plt.clabel(cp, inline=True, fontsize=10)
+    points = body.get_hull_points(old_state)
+    plt.plot(points[:, 0], points[:, 1], '--y')
     points = body.get_hull_points(state)
     plt.plot(points[:, 0], points[:, 1], '--or')
     plt.xlabel('x')
