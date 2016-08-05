@@ -6,9 +6,11 @@ import pandas
 melt_temperature = 0
 space_dims = 2
 nodes_per_cell = pow(2, space_dims)  # This doesn't consider hanging nodes
+temperature = -1
+material = {'name': 'water-ice', 'melting temperature': 0}
 
 
-def get_data(state):
+def solve_pde(state):
     solution_file_name = '../PDE/example_solution.vtk'
     warnings.warn("PDE solver not yet integrated; instead reading solution from "+solution_file_name)
     warnings.warn("Ignoring state "+str(state))
@@ -26,7 +28,7 @@ def get_data(state):
 
 def test():
     state = (0., 0., 0.)
-    data = get_data(state)
+    data = solve_pde(state)
     print(data)
 
 if __name__ == "__main__":

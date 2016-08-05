@@ -18,10 +18,10 @@ def move(old_points, x):
 
 def step_trajectory(initial_state):
     points = body.get_hull_points()
-    data = field.get_data(initial_state) - field.melt_temperature
+    data = field.solve_pde(initial_state) - field.melt_temperature
     # Extrapolate constant values, because NaN's break SciPy.optimize.minimize
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=min(data[:, 2]))
-    plots.plot_interpolator_and_data(interpolator, data)
+    plots.plot_melt_temperature_contour(interpolator, data)
     # @todo: Try probing the solution directly with VTK instead.
     center_of_gravity = body.get_center_of_gravity()
 

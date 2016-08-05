@@ -5,6 +5,25 @@ from matplotlib import cm
 import numpy as np
 import invdisttree
 import interpolate_structured
+import field
+import body
+
+
+def plot_melt_temperature_contour(interpolator, data):
+    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
+    ui = interpolator(xi_grid, yi_grid)
+    plt.interactive(False)
+    plt.subplot(1, 1, 1)
+    cp = plt.contour(xi_grid, yi_grid, ui.reshape(xi_grid.shape),
+                     (field.temperature, field.material['melting temperature']),
+                     colors=('k', 'b'))
+    plt.clabel(cp, inline=True, fontsize=10)
+    points = body.get_hull_points()
+    plt.plot(points[:, 0], points[:, 1], '--or')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.axis('equal')
+    plt.show()
 
 
 def plot_contour_and_data(xi_grid, yi_grid, ui_grid, data):
@@ -43,7 +62,7 @@ def plot_linear_spline_interpolant(data):
 
 def plot_inv_dist_kd_tree_interpolant(data):
     interpolant = invdisttree.Invdisttree(data[:, :2], data[:, 2])
-    xi_grid, yi_grid = grid_sample_points(data)
+    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     ui_grid = interpolant(np.column_stack((xi_grid.flatten(), yi_grid.flatten())))
     plot_contour_and_data(xi_grid, yi_grid, ui_grid.reshape(xi_grid.shape), data)
     plt.title('Inverse-distance KD-Tree interpolation')
@@ -52,7 +71,7 @@ def plot_inv_dist_kd_tree_interpolant(data):
 
 
 def plot_nn_interpolant(data):
-    xi_grid, yi_grid = grid_sample_points(data)
+    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     ui_grid = griddata(data[:, 0], data[:, 1], data[:, 2], xi_grid, yi_grid)  # Natural neighbor interpolation
     plot_contour_and_data(xi_grid, yi_grid, ui_grid, data)
     plt.title('Natural neighbor interpolation')
@@ -60,7 +79,7 @@ def plot_nn_interpolant(data):
 
 
 def plot_rbf_interpolant(data):
-    xi_grid, yi_grid = grid_sample_points(data)
+    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     interpolant = interpolate.Rbf(data[:, 0], data[:, 1], data[:, 2], function='multiquadric')
     ui_grid = interpolant(xi_grid, yi_grid)
     plot_contour_and_data(xi_grid, yi_grid, ui_grid, data)
