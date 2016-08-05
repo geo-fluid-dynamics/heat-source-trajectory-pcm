@@ -1,9 +1,11 @@
-import invdisttree
+import interpolate_scattered
+from scipy import interpolate
 from scipy.optimize import minimize
 import numpy as np
 import math
 import field
 import body
+import plots
 
 
 def move(old_points, x):
@@ -18,7 +20,9 @@ def move(old_points, x):
 def step_trajectory(initial_state):
     points = body.get_hull_points()
     data = field.get_data(initial_state) - field.melt_temperature
-    interpolant = invdisttree.Invdisttree(data[:, :2], data[:, 2])  # Meshless interpolation
+    interpolator = interpolate_scattered.make_interpolator(data, plot=True)
+    # @todo: Why doesn't LinearNDInterpolator work?
+    # interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2])
     # @todo: Try probing the solution directly with VTK instead.
     center_of_gravity = body.get_center_of_gravity()
 
@@ -28,8 +32,7 @@ def step_trajectory(initial_state):
 
     def constraints(x):
         new_points = move(points, x)
-        # How can I create an "interpolant" similar to scatteredInterpolant in MATLAB rather than doing this every time?
-        values = interpolant(new_points[:, :2])
+        values = interpolator(new_points[:, :2])
         return values
 
     state = minimize(fun=objective, x0=initial_state,
@@ -43,7 +46,7 @@ def step_trajectory(initial_state):
 def migrate():
     initial_state = np.array((0., 0., 0.))
     state = initial_state
-    step_count = 2
+    step_count = 1
     print(state)
     for step in range(0, step_count):
         state = step_trajectory(state)

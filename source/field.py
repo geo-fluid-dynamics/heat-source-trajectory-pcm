@@ -4,6 +4,8 @@ import numpy as np
 import warnings
 import pandas
 melt_temperature = 0
+space_dims = 2
+nodes_per_cell = pow(2, space_dims)  # This doesn't consider hanging nodes
 
 
 def get_data(state):
