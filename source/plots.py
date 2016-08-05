@@ -9,7 +9,7 @@ import field
 import body
 
 
-def plot_melt_temperature_contour(interpolator, data):
+def plot_state(interpolator, data, state):
     xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     ui = interpolator(xi_grid, yi_grid)
     plt.interactive(False)
@@ -18,7 +18,7 @@ def plot_melt_temperature_contour(interpolator, data):
                      (field.temperature, field.material['melting temperature']),
                      colors=('k', 'b'))
     plt.clabel(cp, inline=True, fontsize=10)
-    points = body.get_hull_points()
+    points = body.get_hull_points(state)
     plt.plot(points[:, 0], points[:, 1], '--or')
     plt.xlabel('x')
     plt.ylabel('y')

@@ -7,30 +7,21 @@ import body
 import plots
 
 
-def move(old_points, x):
-    assert(x.size == 3)  # 2D
-    theta = x[2]
-    rotation_matrix = np.matrix([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
-    points = np.matrix(old_points)*rotation_matrix
-    points = points + x[:2]
-    return np.array(points)
-
-
 def step_trajectory(initial_state):
     points = body.get_hull_points()
     data = field.solve_pde(initial_state) - field.melt_temperature
     # Extrapolate constant values, because NaN's break SciPy.optimize.minimize
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=min(data[:, 2]))
-    plots.plot_melt_temperature_contour(interpolator, data)
+    plots.plot_state(interpolator, data, initial_state)
     # @todo: Try probing the solution directly with VTK instead.
     center_of_gravity = body.get_center_of_gravity()
 
     def objective(x):
-        new_cg = move(center_of_gravity, x)
+        new_cg = body.move(center_of_gravity, x)
         return new_cg[0, 1]
 
     def constraints(x):
-        new_points = move(points, x)
+        new_points = body.move(points, x)
         values = interpolator(new_points[:, :2])
         return values
 
@@ -45,7 +36,7 @@ def step_trajectory(initial_state):
 def migrate():
     initial_state = np.array((0., 0., 0.))
     state = initial_state
-    step_count = 1
+    step_count = 2
     print(state)
     for step in range(0, step_count):
         state = step_trajectory(state)
