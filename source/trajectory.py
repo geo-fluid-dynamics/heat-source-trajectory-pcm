@@ -1,4 +1,4 @@
-from scipy.interpolate import Rbf
+import invdisttree
 from scipy.optimize import minimize
 import numpy as np
 import math
@@ -18,7 +18,8 @@ def move(old_points, x):
 def step_trajectory(initial_state):
     points = body.get_hull_points()
     data = field.get_data(initial_state) - field.melt_temperature
-    interpolant = Rbf(data[:, 0], data[:, 1], data[:, 2], function='multiquadric')
+    interpolant = invdisttree.Invdisttree(data[:, :2], data[:, 2])  # Meshless interpolation
+    # @todo: Try probing the solution directly with VTK instead.
     center_of_gravity = body.get_center_of_gravity()
 
     def objective(x):
@@ -28,17 +29,19 @@ def step_trajectory(initial_state):
     def constraints(x):
         new_points = move(points, x)
         # How can I create an "interpolant" similar to scatteredInterpolant in MATLAB rather than doing this every time?
-        values = interpolant(new_points[:, 0], new_points[:, 1])
+        values = interpolant(new_points[:, :2])
         return values
 
     state = minimize(fun=objective, x0=initial_state,
                      constraints={'type': 'ineq', 'fun': constraints},
-                     bounds=((None, None), (None, None), (-math.pi/2., math.pi/2.)))
-    return state
+                     bounds=((min(data[:, 0]) - min(points[:, 0]), max(data[:, 0]) - max(points[:, 0])),
+                             (min(data[:, 1]) - min(points[:, 1]), max(data[:, 1]) - max(points[:, 1])),
+                             (-math.pi/2., math.pi/2.)))
+    return state.x
 
 
 def migrate():
-    initial_state = (0., 0., 0.)
+    initial_state = np.array((0., 0., 0.))
     state = initial_state
     step_count = 2
     print(state)

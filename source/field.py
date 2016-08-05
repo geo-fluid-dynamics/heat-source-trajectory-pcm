@@ -2,7 +2,6 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 import numpy as np
 import warnings
-import plots
 import pandas
 melt_temperature = 0
 
@@ -26,7 +25,7 @@ def get_data(state):
 def test():
     state = (0., 0., 0.)
     data = get_data(state)
-    plots.plot_inv_dist_kd_tree_interpolant(data)
+    print(data)
 
 if __name__ == "__main__":
     test()
