@@ -26,8 +26,7 @@ def get_data(state):
 def test():
     state = (0., 0., 0.)
     data = get_data(state)
-    plots.plot_nn_interpolant(data)
-    plots.plot_rbf_interpolant(data)
+    plots.plot_inv_dist_kd_tree_interpolant(data)
 
 if __name__ == "__main__":
     test()
