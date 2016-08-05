@@ -16,7 +16,7 @@ def solve_pde(state):
     copyfile(parameter_file.reference_path, parameter_file.run_input_path)
     parameter_file.set_state(state)
     # Run the PDE solver
-    subprocess.check_output(['../PDE/dimice-heat', parameter_file.run_input_path])  # Used check_output to silence
+    subprocess.check_output(['../pde/dimice-heat', parameter_file.run_input_path])  # Used check_output to silence
     # Read the solution
     solution_file_path = 'solution.0.1.vtk'
     reader = vtk.vtkUnstructuredGridReader()

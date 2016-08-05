@@ -1,5 +1,5 @@
 import fileinput
-reference_path = '../PDE/sphere-cylinder.prm'
+reference_path = '../pde/sphere-cylinder.prm'
 run_input_path = 'pde.prm'
 
 
