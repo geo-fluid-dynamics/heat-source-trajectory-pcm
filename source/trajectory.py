@@ -14,15 +14,14 @@ def move(old_points, x):
     rotation_matrix = np.matrix([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
     points = np.matrix(old_points)*rotation_matrix
     points = points + x[:2]
-    return points
+    return np.array(points)
 
 
 def step_trajectory(initial_state):
     points = body.get_hull_points()
     data = field.get_data(initial_state) - field.melt_temperature
-    interpolator = interpolate_scattered.make_interpolator(data, plot=True)
-    # @todo: Why doesn't LinearNDInterpolator work?
-    # interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2])
+    # Extrapolate constant values, because NaN's break SciPy.optimize.minimize
+    interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=min(data[:, 2]))
     # @todo: Try probing the solution directly with VTK instead.
     center_of_gravity = body.get_center_of_gravity()
 
