@@ -10,19 +10,17 @@ reference_points = body.get_hull_points()
 
 def step_trajectory(initial_state, step):
     data = field.solve_pde(initial_state)
-    # Extrapolate constant values, because NaN's break SciPy.optimize.minimize
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=field.temperature)
 
     def objective(x):
-        cg = body.get_center_of_gravity(x)
-        return cg[1]
+        return body.get_center_of_gravity(x)[1]
 
     def constraints(x):
-        values = interpolator(body.get_hull_points(x)[:, :2])
-        return values
+        return interpolator(body.get_hull_points(x))
 
-    bounds = ((min(data[:, 0]) - min(reference_points[:, 0]), max(data[:, 0]) - max(reference_points[:, 0])),
-              (min(data[:, 1]) - min(reference_points[:, 1]), max(data[:, 1]) - max(reference_points[:, 1])),
+    margin = 1.1  # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
+    bounds = (((min(data[:, 0]) - min(reference_points[:, 0]))/margin, max(data[:, 0]) - max(reference_points[:, 0])),
+              ((min(data[:, 1]) - min(reference_points[:, 1]))/margin, max(data[:, 1]) - max(reference_points[:, 1])),
               (-math.pi/2., math.pi/2.))
     output = minimize(fun=objective, x0=initial_state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
     state = output.x
@@ -30,13 +28,12 @@ def step_trajectory(initial_state, step):
     return state
 
 
-def migrate(step_count=3):
+def migrate(step_count=5):
     initial_state = np.array((0., 0., 0.))
     state = initial_state
-    print(state)
     for step in range(0, step_count):
+        print('Step = '+str(step))
         state = step_trajectory(state, step)
-        print(state)
 
 
 def test():

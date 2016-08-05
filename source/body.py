@@ -26,12 +26,14 @@ def get_hull_points(state=np.array((0., 0., 0.))):
     # @todo: Add argument for number of discrete points and compute them based on the actual geometry.
     nose_tip = [0., -sphere_radius]
     body_points = np.array([nose_tip, [sphere_radius, 0], [sphere_radius, cylinder_length],
-                            [-sphere_radius, cylinder_length], [-sphere_radius, 0], nose_tip])
+                            [-sphere_radius, cylinder_length], [-sphere_radius, 0]])
     body_points = move(body_points, state)
     return body_points
 
 
 def get_center_of_gravity(state=np.array(0.)):
-    # Assume uniform density within the body
-    body_points = get_hull_points(state)
-    return centroid(body_points)
+    return centroid(get_hull_points(state))  # Assume uniform density within the body
+
+
+def close_curve(points):
+    return np.row_stack((points, points[0, :]))

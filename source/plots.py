@@ -18,9 +18,9 @@ def plot_frame(interpolator, data, old_state, state, step):
                      (field.temperature, field.material['melting temperature']),
                      colors=('k', 'b'))
     plt.clabel(cp, inline=True, fontsize=10)
-    points = body.get_hull_points(old_state)
-    plt.plot(points[:, 0], points[:, 1], '--r', label='Old State')
-    points = body.get_hull_points(state)
+    points = body.close_curve(body.get_hull_points(old_state))
+    plt.plot(points[:, 0], points[:, 1], '--y', label='Old State')
+    points = body.close_curve(body.get_hull_points(state))
     plt.plot(points[:, 0], points[:, 1], '-or', label='Current State')
     plt.xlabel('x')
     plt.ylabel('y')
