@@ -11,7 +11,6 @@ reference_points = body.get_hull_points()
 def step_trajectory(initial_state, step):
     data = field.solve_pde(initial_state)
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=field.temperature)
-    plots.plot_interpolator_and_data(interpolator, data)
 
     def objective(x):
         return body.get_center_of_gravity(x)[1]
@@ -20,9 +19,11 @@ def step_trajectory(initial_state, step):
         return interpolator(body.get_hull_points(x))
 
     margin = 1.1  # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
+    max_turn_angle = math.pi/16.
     bounds = (((min(data[:, 0]) - min(reference_points[:, 0]))/margin, max(data[:, 0]) - max(reference_points[:, 0])),
               ((min(data[:, 1]) - min(reference_points[:, 1]))/margin, max(data[:, 1]) - max(reference_points[:, 1])),
-              (-math.pi/2., math.pi/2.))
+              (-max_turn_angle, max_turn_angle))
+    # @todo: Warn if solution is on boundary.
     output = minimize(fun=objective, x0=initial_state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
     state = output.x
     plots.plot_frame(interpolator, data, initial_state, state, step+1)
