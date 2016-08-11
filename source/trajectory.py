@@ -11,6 +11,7 @@ reference_points = body.get_hull_points()
 def step_trajectory(initial_state, step):
     data = field.solve_pde(initial_state)
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=field.temperature)
+    plots.plot_interpolator_and_data(interpolator, data)
 
     def objective(x):
         return body.get_center_of_gravity(x)[1]
@@ -28,7 +29,7 @@ def step_trajectory(initial_state, step):
     return state
 
 
-def migrate(step_count=5):
+def migrate(step_count=1):
     initial_state = np.array((0., 0., 0.))
     state = initial_state
     for step in range(0, step_count):

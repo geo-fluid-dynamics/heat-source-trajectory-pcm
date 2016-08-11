@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import trajectory
 
-
 def test():
     trajectory.migrate()
 

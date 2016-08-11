@@ -50,6 +50,7 @@ def plot_interpolator_and_data(interpolator, data):
     query_points = np.column_stack((xi_grid.flatten(), yi_grid.flatten()))
     ui = interpolator(query_points)
     plot_contour_and_data(xi_grid, yi_grid, ui.reshape(xi_grid.shape), data)
+    plt.show()
 
 
 def plot_linear_spline_interpolant(data):
