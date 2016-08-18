@@ -13,8 +13,11 @@ import body
 def plot_frame(interpolator, data, old_state, state, step):
     xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
     ui = interpolator(xi_grid, yi_grid)
-    plt.interactive(False)
-    plt.subplot(1, 1, 1)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.xlim(-2, 2)
+    plt.ylim(-3, 2)
+    plt.gca().set_aspect('equal', adjustable='box')
     cp = plt.contour(xi_grid, yi_grid, ui.reshape(xi_grid.shape),
                      (field.temperature, field.material['melting temperature']),
                      colors=('k', 'b'))
@@ -23,11 +26,6 @@ def plot_frame(interpolator, data, old_state, state, step):
     plt.plot(points[:, 0], points[:, 1], '--y', label='Old State')
     points = body.close_curve(body.get_hull_points(state))
     plt.plot(points[:, 0], points[:, 1], '-or', label='Current State')
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.axis('equal')
-    plt.xlim((-2., 2.))
-    plt.ylim((-2., 2.))
     plt.legend()
     plt.title('Step '+str(step))
     plt.savefig('trajectory_frame_'+str(step))
