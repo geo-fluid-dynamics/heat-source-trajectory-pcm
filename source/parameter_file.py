@@ -1,15 +1,20 @@
 import fileinput
-reference_path = '../inputs/sphere-cylinder.prm'
+import trajectory
+import body
+reference_path = '../inputs/dimice.prm'
 run_input_path = 'pde.prm'
 
 
 def set_state(state):
-    point_value = state[:2]
-    double_value = state[2]
+    parameters_to_set = {'cylinder_outer_length' : 1.5*body.cylinder_length,
+                         'shift_along_x_axis' : state[0],
+                         'shift_along_y_axis' : state[1],
+                         'rotate_about_z_axis' : state[2],
+                         'interpolate_old_field' : True}
+    if all(state == trajectory.reference_state):
+        parameters_to_set['interpolate_old_field'] = False
     for line in fileinput.input(files=run_input_path, inplace=1):
-        if 'set Optional double 5' in line:
-            line = '  set Optional double 5 = '+str(double_value)
-        elif 'set Optional Point 1' in line:
-            line = '  set Optional Point 1 = '+str(point_value[0])+', '+str(point_value[1])
-        line = line.rstrip()
-        print(line)
+        for key, value in parameters_to_set.items():
+            if key in line:
+                line = '  set '+key+' = '+str(value).lower()
+        print(line.rstrip())
