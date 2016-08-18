@@ -24,6 +24,8 @@ def step_trajectory(initial_state, step):
     # Since the domain will be relatively large compared to the body, and movements should be in small increments.
     # it should suffice to bound the movement relative to the size of the spherical nose.
     max_turn_angle = math.pi/16.
+    # @todo: For a case with ten trajectory steps, it was observed that the minimized state was not tipping all
+    #        the way against the melt boundary on steps 7 and 9. This is an open issue.
     bounds = ((initial_state[0] - body.sphere_radius, initial_state[0] + body.sphere_radius),
               (initial_state[1] - body.sphere_radius, initial_state[1] + body.sphere_radius),
               (initial_state[2] - max_turn_angle, initial_state[2] + max_turn_angle))
