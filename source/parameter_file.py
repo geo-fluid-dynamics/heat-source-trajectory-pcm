@@ -12,7 +12,9 @@ def set_state(state):
                          'shift_along_x_axis' : state[0],
                          'shift_along_y_axis' : state[1],
                          'rotate_about_z_axis' : state[2],
-                         'interpolate_old_field' : True}
+                         'interpolate_old_field' : True,
+                         'max_cells' : 500
+                        }
     if all(state == trajectory.reference_state):
         parameters_to_set['interpolate_old_field'] = False
     for line in fileinput.input(files=run_input_path, inplace=1):
