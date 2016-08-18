@@ -23,11 +23,16 @@ def centroid(points):
 
 
 def get_hull_points(state=np.array((0., 0., 0.))):
-    # @todo: Add argument for number of discrete points and compute them based on the actual geometry.
-    nose_tip = [0., -sphere_radius]
-    body_points = np.array([nose_tip, [sphere_radius, 0], [sphere_radius, cylinder_length],
-                            [-sphere_radius, cylinder_length], [-sphere_radius, 0]])
-    # @todo: Add more points around the circular nose
+    arc_point_count = 11;
+    # Construct spherical curve parametrically
+    sample_angles = np.linspace(np.pi, 2*np.pi, arc_point_count)
+    nose_x = sphere_radius*np.cos(sample_angles)
+    nose_y = sphere_radius*np.sin(sample_angles)
+    nose_points = np.vstack((nose_x, nose_y))
+    nose_points = np.transpose(nose_points)
+    aft_body_points = np.array(([sphere_radius, 0], [sphere_radius, cylinder_length],
+                               [-sphere_radius, cylinder_length], [-sphere_radius, 0]))
+    body_points = np.concatenate((nose_points, aft_body_points))
     body_points = move(body_points, state)
     return body_points
 
