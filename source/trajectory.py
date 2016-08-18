@@ -38,7 +38,7 @@ def step_trajectory(initial_state, step):
     return state
 
 
-def migrate(step_count=6):
+def migrate(step_count=10):
     state = reference_state
     for step in range(0, step_count):
         print('Step = '+str(step))

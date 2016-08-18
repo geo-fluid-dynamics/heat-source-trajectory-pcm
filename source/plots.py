@@ -13,8 +13,8 @@ def plot_frame(interpolator, data, old_state, state, step):
     ui = interpolator(xi_grid, yi_grid)
     plt.xlabel('x')
     plt.ylabel('y')
-    plt.xlim(-2., 2.)
-    plt.ylim(-2, 2.25)
+    plt.xlim(-1., 1.)
+    plt.ylim(-1, 1.5)
     plt.gca().set_aspect('equal', adjustable='box')
     cp = plt.contour(xi_grid, yi_grid, ui.reshape(xi_grid.shape),
                      (0.8*field.temperature, field.material['melting temperature']),
