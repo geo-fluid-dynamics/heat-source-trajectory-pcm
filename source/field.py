@@ -18,11 +18,12 @@ def solve_pde(state):
         copyfile(parameter_file.reference_path, parameter_file.run_input_path)
         parameter_file.set_state(state)
         # Run the PDE solver
-        bash_command = '../bin/heat '+parameter_file.run_input_path
+        bash_command = '../bin/heat_problem '+parameter_file.run_input_path
         subprocess.call('bash -c \''+bash_command+'\'')
         #subprocess.check_output(['bash -c \'..\\bin\\heat\'', parameter_file.run_input_path])  # Used check_output to silence
     # Read the solution
-    solution_file_name = 'solution.0.1.vtk'
+    # @todo: Read latest solution time instead of having to specify the exact file name here.
+    solution_file_name = 'solution-15.vtk'
     reader = vtk.vtkUnstructuredGridReader()
     reader.SetFileName(dimice_working_dir+solution_file_name)
     reader.Update()
