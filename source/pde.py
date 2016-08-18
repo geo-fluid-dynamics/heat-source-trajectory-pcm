@@ -10,7 +10,7 @@ import subprocess
 
 dimice_working_dir = 'C:\\Users\\Alexander\\UbuntuShared\\dimice-heat-dealii\\run\\'
 end_time = 0.004
-time_step = 0.002
+time_step = 0.004
 max_cells = 500
 
 def solve(state):
