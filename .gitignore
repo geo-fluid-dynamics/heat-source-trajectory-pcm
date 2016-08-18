@@ -1,4 +1,4 @@
 *.pyc
 *.pyproj
 *.sln
-run\
+run/*
