@@ -1,19 +1,21 @@
 import fileinput
 import trajectory
+import pde
 import body
 reference_path = '../inputs/dimice.prm'
 run_input_path = 'pde.prm'
 
 
 def set_state(state):
-    parameters_to_set = {'cylinder_outer_length' : 1.5*body.cylinder_length,
-                         'end_time' : 0.015,
-                         'time_step' : 0.001,
+    parameters_to_set = {'cylinder_outer_length' : 2*body.cylinder_length,
+                         'sphere_outer_radius' : 6*body.sphere_radius,
+                         'end_time' : pde.end_time,
+                         'time_step' : pde.time_step,
                          'shift_along_x_axis' : state[0],
                          'shift_along_y_axis' : state[1],
                          'rotate_about_z_axis' : state[2],
                          'interpolate_old_field' : True,
-                         'max_cells' : 500
+                         'max_cells' : pde.max_cells
                         }
     if all(state == trajectory.reference_state):
         parameters_to_set['interpolate_old_field'] = False

@@ -3,13 +3,14 @@ from scipy.optimize import minimize
 import numpy as np
 import math
 import field
+import pde
 import body
 import plots
 reference_points = body.get_hull_points()
 reference_state = np.array((0., 0., 0.))
 
 def step_trajectory(initial_state, step):
-    data = field.solve_pde(initial_state)
+    data = pde.solve(initial_state)
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=field.temperature)
 
     def objective(x):
@@ -37,7 +38,7 @@ def step_trajectory(initial_state, step):
     return state
 
 
-def migrate(step_count=10):
+def migrate(step_count=6):
     state = reference_state
     for step in range(0, step_count):
         print('Step = '+str(step))
