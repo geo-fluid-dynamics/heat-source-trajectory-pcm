@@ -8,6 +8,7 @@ import interpolate_structured
 import field
 import body
 
+# @todo: plot frames with Paraview
 
 def plot_frame(interpolator, data, old_state, state, step):
     xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
@@ -25,8 +26,8 @@ def plot_frame(interpolator, data, old_state, state, step):
     plt.xlabel('x')
     plt.ylabel('y')
     plt.axis('equal')
-    plt.xlim((-1., 1.))
-    plt.ylim((-1., 1.5))
+    plt.xlim((-2., 2.))
+    plt.ylim((-2., 2.))
     plt.legend()
     plt.title('Step '+str(step))
     plt.savefig('trajectory_frame_'+str(step))
