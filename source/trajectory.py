@@ -26,7 +26,7 @@ def step_trajectory(initial_state, step):
     max_turn_angle = math.pi/16.
     bounds = ((initial_state[0] - body.sphere_radius, initial_state[0] + body.sphere_radius),
               (initial_state[1] - body.sphere_radius, initial_state[1] + body.sphere_radius),
-              (-max_turn_angle, max_turn_angle))
+              (initial_state[2] - max_turn_angle, initial_state[2] + max_turn_angle))
     # @todo: Warn if solution is on boundary.
     output = minimize(fun=objective, x0=initial_state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
     state = output.x
@@ -35,7 +35,7 @@ def step_trajectory(initial_state, step):
     return state
 
 
-def migrate(step_count=3):
+def migrate(step_count=10):
     state = reference_state
     for step in range(0, step_count):
         print('Step = '+str(step))
