@@ -25,7 +25,7 @@ def plot_frame(interpolator, data, old_state, state, step):
     points = body.close_curve(body.get_hull_points(old_state))
     plt.plot(points[:, 0], points[:, 1], '--y', label='Old State')
     points = body.close_curve(body.get_hull_points(state))
-    plt.plot(points[:, 0], points[:, 1], '-or', label='Current State')
+    plt.plot(points[:, 0], points[:, 1], '-r', label='Current State')
     plt.legend()
     plt.title('Step '+str(step))
     plt.savefig('trajectory_frame_'+str(step))
