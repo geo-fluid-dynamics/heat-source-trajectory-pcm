@@ -7,6 +7,8 @@ run_input_path = 'pde.prm'
 
 def set_state(state):
     parameters_to_set = {'cylinder_outer_length' : 1.5*body.cylinder_length,
+                         'end_time' : 0.015,
+                         'time_step' : 0.001,
                          'shift_along_x_axis' : state[0],
                          'shift_along_y_axis' : state[1],
                          'rotate_about_z_axis' : state[2],
