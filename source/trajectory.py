@@ -6,7 +6,7 @@ import field
 import body
 import plots
 reference_points = body.get_hull_points()
-
+reference_state = np.array((0., 0., 0.))
 
 def step_trajectory(initial_state, step):
     data = field.solve_pde(initial_state)
@@ -18,21 +18,25 @@ def step_trajectory(initial_state, step):
     def constraints(x):
         return interpolator(body.get_hull_points(x))
 
-    margin = 1.1  # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
+    initial_hull_points = body.get_hull_points(initial_state)
+    # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
+    # We must limit x away from the boundary of the domain.
+    # Since the domain will be relatively large compared to the body, and movements should be in small increments.
+    # it should suffice to bound the movement relative to the size of the spherical nose.
     max_turn_angle = math.pi/16.
-    bounds = (((min(data[:, 0]) - min(reference_points[:, 0]))/margin, max(data[:, 0]) - max(reference_points[:, 0])),
-              ((min(data[:, 1]) - min(reference_points[:, 1]))/margin, max(data[:, 1]) - max(reference_points[:, 1])),
+    bounds = ((initial_state[0] - body.sphere_radius, initial_state[0] + body.sphere_radius),
+              (initial_state[1] - body.sphere_radius, initial_state[1] + body.sphere_radius),
               (-max_turn_angle, max_turn_angle))
     # @todo: Warn if solution is on boundary.
     output = minimize(fun=objective, x0=initial_state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
     state = output.x
+    assert(not any(np.isnan(state)))
     plots.plot_frame(interpolator, data, initial_state, state, step+1)
     return state
 
 
-def migrate(step_count=1):
-    initial_state = np.array((0., 0., 0.))
-    state = initial_state
+def migrate(step_count=3):
+    state = reference_state
     for step in range(0, step_count):
         print('Step = '+str(step))
         state = step_trajectory(state, step)

@@ -27,6 +27,7 @@ def get_hull_points(state=np.array((0., 0., 0.))):
     nose_tip = [0., -sphere_radius]
     body_points = np.array([nose_tip, [sphere_radius, 0], [sphere_radius, cylinder_length],
                             [-sphere_radius, cylinder_length], [-sphere_radius, 0]])
+    # @todo: Add more points around the circular nose
     body_points = move(body_points, state)
     return body_points
 
