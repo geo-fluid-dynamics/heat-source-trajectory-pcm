@@ -3,14 +3,13 @@ from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
-import interpolate_structured
 import field
 import body
 
 # @todo: plot frames with Paraview
 
 def plot_frame(interpolator, data, old_state, state, step):
-    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
+    xi_grid, yi_grid = grid_sample_points(data)
     ui = interpolator(xi_grid, yi_grid)
     plt.xlabel('x')
     plt.ylabel('y')
@@ -44,12 +43,11 @@ def plot_contour_and_data(xi_grid, yi_grid, ui_grid, data):
 
 
 def plot_interpolator_and_data(interpolator, data):
-    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
+    xi_grid, yi_grid = grid_sample_points(data)
     query_points = np.column_stack((xi_grid.flatten(), yi_grid.flatten()))
     ui = interpolator(query_points)
     plot_contour_and_data(xi_grid, yi_grid, ui.reshape(xi_grid.shape), data)
     plt.show()
-
 
 
 def grid_sample_points(data):
@@ -62,11 +60,12 @@ def grid_sample_points(data):
     xi_grid, yi_grid = np.meshgrid(xi, yi)
     return xi_grid, yi_grid
 
+
 def make_interpolator(scattered_data, resolution=100, plot=False):
     # This is an inefficient an inaccurate substitute for natural neighbor interpolation on to scattered points.
     # Make a gridded natural neighbor interpolation
     data = scattered_data
-    xi_grid, yi_grid = interpolate_structured.grid_sample_points(data)
+    xi_grid, yi_grid = grid_sample_points(data)
     ui_grid = mlab.griddata(data[:, 0], data[:, 1], data[:, 2], xi_grid, yi_grid)  # Natural neighbor interpolation
     # Make an interpolator that can be called with scattered points
     # @todo: The natural neighbor interpolation looks great, and then this grid interpolator fails completely.
