@@ -12,7 +12,7 @@ reference_points = body.get_hull_points()
 reference_state = np.array((0., 0., 0.))
 
 def step_trajectory(initial_state, step):
-    data = pde.solve(initial_state)
+    data = pde.solve(step, initial_state)
     interpolator = interpolate.LinearNDInterpolator(data[:, :2], data[:, 2], fill_value=input.field['temperature'])
 
     def objective(x):

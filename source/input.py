@@ -1,5 +1,5 @@
 trajectory = {
-    'step_count': 7
+    'step_count': 3
     }
 
 body = {

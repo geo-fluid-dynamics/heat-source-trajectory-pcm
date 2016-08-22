@@ -7,6 +7,7 @@ from shutil import copyfile
 import os
 import subprocess
 import fileinput
+import shutil
 
 import input
 import trajectory
@@ -23,7 +24,7 @@ def init():
         bash_command = input.pde['exe_path'] # This will generate a default parameter file.
         subprocess.call('bash -c \''+bash_command+'\'')
 
-def solve(state):
+def solve(step, state):
     with cd(pde_working_dir):
         # Prepare input file for PDE solver
         copyfile('default.prm', run_input_file_name)
@@ -43,6 +44,15 @@ def solve(state):
     table = pandas.DataFrame(data=data)
     table = table.drop_duplicates()
     data = table.as_matrix()
+    # Move some PDE solver outputs to archive directory
+    archive_dir = pde_working_dir+'step'+str(step)+'\\'
+    if not os.path.exists(archive_dir):
+        os.makedirs(archive_dir)
+    for file_name in ['log.txt', 'pde.prm']:
+        shutil.move(os.path.join(pde_working_dir, file_name), os.path.join(archive_dir, file_name))
+    for file in os.listdir(pde_working_dir):
+        if file.endswith('.vtk'):
+            shutil.move(os.path.join(pde_working_dir, file), os.path.join(archive_dir, file))
     return data
 
 
