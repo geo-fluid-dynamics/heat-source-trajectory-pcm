@@ -1,9 +1,7 @@
 import numpy as np
 import math
-sphere_radius = 0.25
-cylinder_length = 1.0
-boundary_values = {'hot temperature': 1., 'warm temperature': 0.1}
 
+import input
 
 def move(old_points, x):
     assert(x.size == 3)  # 2D
@@ -23,13 +21,15 @@ def centroid(points):
 
 
 def get_hull_points(state=np.array((0., 0., 0.))):
-    arc_point_count = 11;
+    arc_point_count = input.body['nose_arc_point_count']
     # Construct spherical curve parametrically
     sample_angles = np.linspace(np.pi, 2*np.pi, arc_point_count)
+    sphere_radius = input.body['sphere_radius']
     nose_x = sphere_radius*np.cos(sample_angles)
     nose_y = sphere_radius*np.sin(sample_angles)
     nose_points = np.vstack((nose_x, nose_y))
     nose_points = np.transpose(nose_points)
+    cylinder_length = input.body['cylinder_length']
     aft_body_points = np.array(([sphere_radius, 0], [sphere_radius, cylinder_length],
                                [-sphere_radius, cylinder_length], [-sphere_radius, 0]))
     body_points = np.concatenate((nose_points, aft_body_points))

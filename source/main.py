@@ -1,7 +1,9 @@
 #!/usr/bin/python
+import pde
 import trajectory
 
 def test():
+    pde.init()
     trajectory.migrate()
 
 
