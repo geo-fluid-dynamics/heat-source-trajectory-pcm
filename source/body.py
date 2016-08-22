@@ -25,21 +25,29 @@ def get_hull_points(state=np.array((0., 0., 0.))):
 
 
 def get_sphere_cylinder_points(state):
-    arc_point_count = input.body['arc_point_count']
-    # Construct spherical curve parametrically
-    sample_angles = np.linspace(np.pi, 2*np.pi, arc_point_count)
     sizes = input.body['sizes']
+    # Construct spherical curve parametrically
+    arc_point_count = input.body['arc_point_count']
+    sample_angles = np.linspace(np.pi, 2*np.pi, arc_point_count)
     sphere_radius = sizes[0]
     nose_x = sphere_radius*np.cos(sample_angles)
     nose_y = sphere_radius*np.sin(sample_angles)
     nose_points = np.vstack((nose_x, nose_y))
     nose_points = np.transpose(nose_points)
+    # Construct aft-body
     cylinder_length = sizes[2]
-    aft_body_points = np.array(([sphere_radius, 0], [sphere_radius, cylinder_length],
-                               [-sphere_radius, cylinder_length], [-sphere_radius, 0]))
+    line_point_count = input.body['line_point_count']
+    aft_body_points = points_on_line([sphere_radius, 0], [sphere_radius, cylinder_length], line_point_count)
+    aft_body_points = np.append(aft_body_points, points_on_line([-sphere_radius, cylinder_length], [-sphere_radius, 0], line_point_count), axis=0)
+    #
     body_points = np.concatenate((nose_points, aft_body_points))
     body_points = move(body_points, state)
     return body_points
+
+
+def points_on_line(start_point, end_point, count):
+    return np.transpose(np.vstack((np.linspace(start_point[0], end_point[0], count),
+                                   np.linspace(start_point[1], end_point[1], count))))
 
 
 def get_center_of_gravity(state=np.array(0.)):
