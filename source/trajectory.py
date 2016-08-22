@@ -3,10 +3,12 @@ from scipy.optimize import minimize
 import numpy as np
 import math
 
-import input
+import inputs
 import pde
 import body
 import plots
+
+input = inputs.Inputs()
 
 reference_points = body.get_hull_points()
 reference_state = np.array((0., 0., 0.))
@@ -41,9 +43,9 @@ def step_trajectory(initial_state, step):
     return state
 
 
-def migrate(step_count=input.trajectory['step_count']):
+def migrate():
     state = reference_state
-    for step in range(0, step_count):
+    for step in range(0, input.trajectory['step_count']):
         print('Step = '+str(step))
         state = step_trajectory(state, step)
 
