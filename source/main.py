@@ -1,10 +1,15 @@
 #!/usr/bin/python
-import pde
 import trajectory
 
 def test():
-    pde.init()
-    trajectory.migrate()
+
+    traj = trajectory.Trajectory()
+    traj.run()
+    #
+    traj = trajectory.Trajectory()
+    traj.input.name = "turn"
+    traj.pde.input.dirichlet_boundary_values[-1] = 0.1
+    traj.run()
 
 
 if __name__ == "__main__":
