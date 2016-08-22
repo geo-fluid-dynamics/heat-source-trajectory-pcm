@@ -29,9 +29,9 @@ def step_trajectory(initial_state, step):
     max_turn_angle = math.pi/16.
     # @todo: For a case with ten trajectory steps, it was observed that the minimized state was not tipping all
     #        the way against the melt boundary on steps 7 and 9. This is an open issue.
-    r = input.body['sphere_radius']
-    bounds = ((initial_state[0] - r, initial_state[0] + r),
-              (initial_state[1] - r, initial_state[1] + r),
+    reference_length = input.body['reference_length']
+    bounds = ((initial_state[0] - reference_length, initial_state[0] + reference_length),
+              (initial_state[1] - reference_length, initial_state[1] + reference_length),
               (initial_state[2] - max_turn_angle, initial_state[2] + max_turn_angle))
     # @todo: Warn if solution is on boundary.
     output = minimize(fun=objective, x0=initial_state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)

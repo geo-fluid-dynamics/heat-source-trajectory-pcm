@@ -21,15 +21,20 @@ def centroid(points):
 
 
 def get_hull_points(state=np.array((0., 0., 0.))):
-    arc_point_count = input.body['nose_arc_point_count']
+    return get_sphere_cylinder_points(state)
+
+
+def get_sphere_cylinder_points(state):
+    arc_point_count = input.body['arc_point_count']
     # Construct spherical curve parametrically
     sample_angles = np.linspace(np.pi, 2*np.pi, arc_point_count)
-    sphere_radius = input.body['sphere_radius']
+    sizes = input.body['sizes']
+    sphere_radius = sizes[0]
     nose_x = sphere_radius*np.cos(sample_angles)
     nose_y = sphere_radius*np.sin(sample_angles)
     nose_points = np.vstack((nose_x, nose_y))
     nose_points = np.transpose(nose_points)
-    cylinder_length = input.body['cylinder_length']
+    cylinder_length = sizes[2]
     aft_body_points = np.array(([sphere_radius, 0], [sphere_radius, cylinder_length],
                                [-sphere_radius, cylinder_length], [-sphere_radius, 0]))
     body_points = np.concatenate((nose_points, aft_body_points))

@@ -58,12 +58,16 @@ def solve(step, state):
 
 def set_parameters(state):
     parameters_to_set = {
-        'sizes': [input.body['sphere_radius'], 2*input.body['sphere_radius'], input.body['cylinder_length'], 1.25*input.body['cylinder_length']],
+        'sizes': input.body['sizes'],
         'transformations': [state[0], state[1], state[2]],
-        'end_time' : end_time,
-        'time_step' : time_step,
-        'interpolate_old_field' : True,
-        'max_cells' : input.pde['max_cells']
+        'end_time': end_time,
+        'time_step': time_step,
+        'interpolate_old_field': True,
+        'max_cells': input.pde['max_cells'],
+        'dirichlet_boundary_ids': input.pde['dirichlet_boundary_ids'],
+        'dirichlet_boundary_values': input.pde['dirichlet_boundary_values'],
+        'neumann_boundary_ids': input.pde['neumann_boundary_ids'],
+        'neumann_boundary_values': input.pde['neumann_boundary_values']
         }
     if all(state == trajectory.reference_state):
         parameters_to_set['interpolate_old_field'] = False
