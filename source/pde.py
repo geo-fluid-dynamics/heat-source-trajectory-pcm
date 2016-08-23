@@ -27,9 +27,10 @@ class PDE:
         if not os.path.exists(self.input.working_dir):
             os.makedirs(self.input.working_dir)
         with cd(self.input.working_dir):
-            # This will generate the default parameter file.
-            command = 'bash -c \''+self.input.exe_path+'\''
-            subprocess.call(command)
+            if not os.path.exists(self.default_parameter_file_name):
+                # This will generate the default parameter file.
+                command = 'bash -c \''+self.input.exe_path+'\''
+                subprocess.call(command)
 
 
     def solve(self, trajectory):
