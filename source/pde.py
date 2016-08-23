@@ -80,12 +80,10 @@ class PDE:
             'neumann_boundary_ids': self.input.neumann_boundary_ids,
             'neumann_boundary_values': self.input.neumann_boundary_values,
             'dirichlet_ramp_boundary_ids': self.input.dirichlet_ramp_boundary_ids,
-            'dirichlet_ramp_start_points': [self.body.input.sphere_radius, 0.,
-                                            -self.body.input.sphere_radius, 0.],
-            'dirichlet_ramp_end_points': [self.body.input.sphere_radius, self.body.input.cylinder_length,
-                                          -self.body.input.sphere_radius, self.body.input.cylinder_length],
-            'dirichlet_ramp_start_values': [self.input.dirichlet_boundary_values[0], self.input.dirichlet_boundary_values[-1]],
-            'dirichlet_ramp_end_values': [self.input.dirichlet_boundary_values[1], self.input.dirichlet_boundary_values[-2]]
+            'dirichlet_ramp_start_points': self.input.dirichlet_ramp_start_points,
+            'dirichlet_ramp_end_points': self.input.dirichlet_ramp_end_points,
+            'dirichlet_ramp_start_values': self.input.dirichlet_ramp_start_values,
+            'dirichlet_ramp_end_values': self.input.dirichlet_ramp_end_values
             }
         for key, value in parameters_to_set.items():
             set_parameter(self.run_input_file_name, key, value)
@@ -100,12 +98,18 @@ class PDE:
 def set_parameter(file_name, key, value):
     found_key = False
     for line in fileinput.input(files=file_name, inplace=1):
-        if key in line:
+        if 'set '+key in line:
             found_key = True
-            line = '  set '+key+' = '+((str(value).lower()).replace("[", "")).replace("]", "")
+            line = '  set '+key+' = '+strip_brackets(str(value).lower())
         print(line.rstrip())
     if not found_key:
         raise NameError(key)
+
+
+def strip_brackets(string):
+    for bracket in ('[', ']', '(', ')'):
+        string = string.replace(bracket, '')
+    return string
 
 
 class cd:
