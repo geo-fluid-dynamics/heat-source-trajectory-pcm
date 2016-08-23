@@ -1,13 +1,15 @@
 #!/usr/bin/python
 import trajectory
+import pde
 
 
 def run():
-    run_default()
-    run_turn()
-    run_s_turn()
-    run_smooth_s_turn()
+    #run_default()
+    #run_turn()
+    #run_s_turn()
+    #run_smooth_s_turn()
     #run_turn_with_ramped_nose_bc()
+    run_s_turn_with_narrow_body()
 
 
 def run_default():
@@ -96,6 +98,37 @@ def run_turn_with_ramped_nose_bc():
                                                -R, 0]
     traj.pde.input.dirichlet_ramp_start_values = [hot, hot]
     traj.pde.input.dirichlet_ramp_end_values = [warm, warm]
+    traj.run()
+
+
+def run_s_turn_with_narrow_body():
+    traj = trajectory.Trajectory()
+    traj.input.name = "s_turn_with_narrow_body"
+    traj.body.input.sphere_radius = 0.1
+    traj.pde = pde.PDE(traj.body)
+    warm = traj.pde.input.warm
+    hot = traj.pde.input.hot
+    #
+    traj.body.input.reference_length = traj.body.input.sphere_radius
+    traj.pde.input.sizes[1] = 8*traj.body.input.sphere_radius
+    traj.pde.input.end_time *= 2
+    #
+    traj.pde.input.dirichlet_ramp_start_values[1] = warm
+    traj.pde.input.dirichlet_boundary_values[-1] = warm # Cool down this boundary to force a turn
+    traj.run()
+    # Stop turning
+    traj.pde.input.dirichlet_ramp_start_values[1] = warm
+    traj.pde.input.dirichlet_ramp_start_values[0] = warm
+    traj.pde.input.dirichlet_boundary_values[-1] = warm
+    traj.pde.input.dirichlet_boundary_values[0] = warm
+    traj.input.step_count += 1
+    traj.run()
+    # Reverse the nose temperatures to turn the other way.
+    traj.pde.input.dirichlet_ramp_start_values[1] = hot
+    traj.pde.input.dirichlet_ramp_start_values[0] = warm
+    traj.pde.input.dirichlet_boundary_values[-1] = hot
+    traj.pde.input.dirichlet_boundary_values[0] = warm
+    traj.input.step_count += 3
     traj.run()
 
 

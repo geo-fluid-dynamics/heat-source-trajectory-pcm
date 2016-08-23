@@ -44,11 +44,13 @@ def make_sphere_cylinder_points(sphere_radius=0.25, cylinder_length=1.0,
 
 
 def points_on_line(start_point, end_point, count):
+    assert(len(start_point) == 2)  # 2D
     return np.transpose(np.vstack((np.linspace(start_point[0], end_point[0], count),
                                    np.linspace(start_point[1], end_point[1], count))))
 
 
 def centroid(points):
+    assert(points.shape[1] == 2)  # 2D
     length = points.shape[0]
     sum_x = np.sum(points[:, 0])
     sum_y = np.sum(points[:, 1])
@@ -59,7 +61,6 @@ def move(old_points, x):
     assert(x.size == 3)  # 2D
     theta = x[2]
     rotation_matrix = np.matrix([[math.cos(theta), math.sin(theta)], [-math.sin(theta), math.cos(theta)]])
-    # @todo: Is the rotation direction consistent with the deal.II parameter?
     points = np.matrix(old_points)*rotation_matrix
     points = points + x[:2]
     return np.array(points)

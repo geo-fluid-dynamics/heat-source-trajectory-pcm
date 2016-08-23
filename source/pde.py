@@ -18,7 +18,7 @@ class PDE:
     default_parameter_file_name = 'default.prm'
 
     def __init__(self, body):
-        self.input = inputs.PDEInputs()
+        self.input = inputs.PDEInputs(body)
         self.body = body
         self.run_input_file_name = 'pde.prm'
         self.interpolate_old_field = False
@@ -70,8 +70,9 @@ class PDE:
     def set_parameters(self, state):
         assert(self.body.input.geometry_name == 'hemisphere_cylinder_shell') # @todo: Generalize ramp BC handling.
         parameters_to_set = {
-            'sizes': self.body.input.sizes,
+            'sizes': self.input.sizes,
             'transformations': [state[0], state[1], state[2]],
+            'semi_implicit_theta': self.input.semi_implicit_theta,
             'end_time': self.input.end_time,
             'time_step': self.input.time_step,
             'interpolate_old_field': self.interpolate_old_field,

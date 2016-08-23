@@ -26,7 +26,8 @@ class Trajectory:
         self.pde.solve(self)
 
         def objective(x):
-            return self.body.get_center_of_gravity(x)[1]
+            gravity_aligned_axis = 1
+            return self.body.get_center_of_gravity(x)[gravity_aligned_axis]
 
         def constraints(x):
             return self.pde.interpolator(self.body.get_hull_points(x))
@@ -43,10 +44,23 @@ class Trajectory:
         bounds = ((self.state[0] - reference_length, self.state[0] + reference_length),
                   (self.state[1] - reference_length, self.state[1] + reference_length),
                   (self.state[2] - max_turn_angle, self.state[2] + max_turn_angle))
-        # @todo: Warn if solution is on boundary.
+        # Verify that the initial guess does not violate any constraints.
+        epsilon = 1e-6
+        constraint_values = constraints(self.state)
+        assert(not any(constraint_values < -epsilon))
+        #
         output = minimize(fun=objective, x0=self.state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
+        # Verify that the solution does not violate any constraints.
+        # scipy.minimize likes to return "success" even though constraints are violated.
+        constraint_values = constraints(output.x)
+        assert(not any(constraint_values < -epsilon)) 
+        #
+        assert(not any(np.isnan(output.x)))
+        #
         self.state = output.x
-        assert(not any(np.isnan(self.state)))
+        # @todo: Warn if solution is on boundary.
+
+        #
         self.step += 1
 
 
@@ -69,8 +83,10 @@ class Trajectory:
         ui = self.pde.interpolator(xi_grid, yi_grid)
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.xlim(self.input.plot_xlim)
-        plt.ylim(self.input.plot_ylim)
+        if self.input.plot_xlim:
+            plt.xlim(self.input.plot_xlim)
+            plt.ylim(self.input.plot_ylim)
+        plt.grid()
         plt.gca().set_aspect('equal', adjustable='box')
         cp = plt.contour(xi_grid, yi_grid, ui.reshape(xi_grid.shape),
                          (0.8*self.environment.temperature,
