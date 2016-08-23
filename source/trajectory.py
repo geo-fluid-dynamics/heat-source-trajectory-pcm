@@ -2,6 +2,7 @@ from scipy.optimize import minimize
 import numpy as np
 import math
 import os
+import matplotlib.pyplot as plt
 
 import inputs
 import pde
@@ -57,10 +58,34 @@ class Trajectory:
             print('Step = '+str(self.step))
             self.old_state = self.state
             self.run_step()
-            plots.plot_trajectory_frame(self)
+            self.plot_frame()
             self.pde.interpolate_old_field = True
-        with pde.cd(self.pde.input.working_dir):
-            os.remove(self.pde.default_parameter_file_name)
+
+
+    # @todo: plot frames with Paraview
+
+    def plot_frame(self):    
+        xi_grid, yi_grid = plots.grid_sample_points(self.pde.data)
+        ui = self.pde.interpolator(xi_grid, yi_grid)
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.xlim(self.input.plot_xlim)
+        plt.ylim(self.input.plot_ylim)
+        plt.gca().set_aspect('equal', adjustable='box')
+        cp = plt.contour(xi_grid, yi_grid, ui.reshape(xi_grid.shape),
+                         (0.8*self.environment.temperature,
+                         self.environment.material['melting temperature']),
+                         colors=('k', 'b'))
+        plt.clabel(cp, inline=True, fontsize=10)
+        points = body.close_curve(self.body.get_hull_points(self.old_state))
+        plt.plot(points[:, 0], points[:, 1], '--y', label='Old State')
+        points = body.close_curve(self.body.get_hull_points(self.state))
+        plt.plot(points[:, 0], points[:, 1], '-r', label='Current State')
+        plt.legend()
+        plt.title('Step '+str(self.step))
+        plt.savefig(self.input.name+'\\trajectory_frame_'+str(self.step))
+        plt.cla()
+
 
     def test(self):
         self.run()
