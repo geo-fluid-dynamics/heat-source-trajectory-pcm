@@ -24,7 +24,8 @@ class PDEInputs:
     end_time = 0.01
     time_step = 0.002
     max_cells = 1000
-    dirichlet_boundary_ids = [5, 6, 7, 8, 9]
-    dirichlet_boundary_values = [1.0, 0.1, 0.1, 0.1, 1.0]
+    dirichlet_boundary_ids = [5, 7, 9]
+    dirichlet_boundary_values = [1.0, 0.1, 1.0]
     neumann_boundary_ids = [0, 1, 2, 3, 4]
     neumann_boundary_values = [-1.0, -1.0, -1.0, -1.0, -1.0]
+    dirichlet_ramp_boundary_ids = [6, 8]
