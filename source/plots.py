@@ -5,31 +5,6 @@ from matplotlib import cm
 import numpy as np
 import body
 
-# @todo: plot frames with Paraview
-
-def plot_trajectory_frame(trajectory):
-    xi_grid, yi_grid = grid_sample_points(trajectory.pde.data)
-    ui = trajectory.pde.interpolator(xi_grid, yi_grid)
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.xlim(-1., 1.)
-    plt.ylim(-1, 1.5)
-    plt.gca().set_aspect('equal', adjustable='box')
-    cp = plt.contour(xi_grid, yi_grid, ui.reshape(xi_grid.shape),
-                     (0.8*trajectory.environment.temperature,
-                     trajectory.environment.material['melting temperature']),
-                     colors=('k', 'b'))
-    plt.clabel(cp, inline=True, fontsize=10)
-    points = body.close_curve(trajectory.body.get_hull_points(trajectory.old_state))
-    plt.plot(points[:, 0], points[:, 1], '--y', label='Old State')
-    points = body.close_curve(trajectory.body.get_hull_points(trajectory.state))
-    plt.plot(points[:, 0], points[:, 1], '-r', label='Current State')
-    plt.legend()
-    plt.title('Step '+str(trajectory.step))
-    plt.savefig(trajectory.input.name+'\\trajectory_frame_'+str(trajectory.step))
-    plt.cla()
-
-
 def plot_contour_and_data(xi_grid, yi_grid, ui_grid, data):
     # Plot the structured sample
     plt.interactive(False)
