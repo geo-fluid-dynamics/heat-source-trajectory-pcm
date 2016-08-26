@@ -47,6 +47,10 @@ class Trajectory:
         # Verify that the initial guess does not violate any constraints.
         epsilon = 1e-6
         constraint_values = constraints(self.state)
+        if any(constraint_values < -epsilon):
+            print "Stuck in the ice! Can't move yet."
+            self.step += 1
+            return
         assert(not any(constraint_values < -epsilon))
         #
         output = minimize(fun=objective, x0=self.state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)

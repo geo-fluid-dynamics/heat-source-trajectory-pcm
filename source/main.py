@@ -5,15 +5,50 @@ import pde
 
 def run():
     #run_default()
+    run_with_neumann_inner_bc()
+    #run_with_dirichlet_outer_bc()
     #run_turn()
     #run_s_turn()
     #run_smooth_s_turn()
     #run_turn_with_ramped_nose_bc()
-    run_s_turn_with_narrow_body()
-
+    #run_s_turn_with_narrow_body()
+    
 
 def run_default():
     traj = trajectory.Trajectory()
+    traj.run()
+    traj.input.step_count += 2
+    traj.run()
+
+
+def run_with_neumann_inner_bc():
+    traj = trajectory.Trajectory()
+    traj.input.name = "neumann_inner_bc"
+    cold = traj.pde.input.cold
+    warm = traj.pde.input.warm
+    hot = traj.pde.input.hot
+    traj.pde.input.dirichlet_boundary_ids = [0, 1, 2, 3, 4]
+    traj.pde.input.dirichlet_boundary_values = [cold, cold, cold, cold, cold]
+    traj.pde.input.dirichlet_ramp_boundary_ids = []
+    traj.pde.input.neumann_boundary_ids = [5, 6, 7, 8, 9]
+    traj.pde.input.neumann_boundary_values = [10., 5., 5., 5., 10.]
+    neumann_boundary_ids = []
+    traj.input.step_count = 10
+    end_time = 0.03
+    time_step = 0.005
+    traj.run()
+
+
+def run_with_dirichlet_outer_bc():
+    traj = trajectory.Trajectory()
+    traj.input.name = "dirichlet_outer_bc"
+    cold = traj.pde.input.cold
+    warm = traj.pde.input.warm
+    hot = traj.pde.input.hot
+    traj.pde.input.dirichlet_boundary_ids = [0, 1, 2, 3, 4, 5, 7, 9]
+    traj.pde.input.dirichlet_boundary_values = [cold, cold, cold, cold, cold, hot, warm, hot]
+    traj.pde.input.neumann_boundary_ids = []
+    traj.input.step_count = 5
     traj.run()
 
 
