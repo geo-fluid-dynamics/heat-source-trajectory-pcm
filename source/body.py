@@ -10,8 +10,7 @@ class Body:
 
 
     def get_hull_points(self, state):
-        points = make_sphere_cylinder_points(self.input.sphere_radius, self.input.cylinder_length,
-                                             self.input.arc_point_count, self.input.line_point_count)
+        points = make_sphere_points(self.input.sphere_radius)
         points = move(points, state)
         return points
 
@@ -22,6 +21,16 @@ class Body:
 
 def close_curve(points):
     return np.row_stack((points, points[0, :]))
+
+
+def make_sphere_points(sphere_radius=1., point_count=33):
+        # Construct spherical curve parametrically
+        sample_angles = np.linspace(0, 2*np.pi, point_count)
+        x = sphere_radius*np.cos(sample_angles)
+        y = sphere_radius*np.sin(sample_angles)
+        points = np.vstack((x, y))
+        points = np.transpose(points)
+        return points
 
 
 def make_sphere_cylinder_points(sphere_radius=0.25, cylinder_length=1.0,
