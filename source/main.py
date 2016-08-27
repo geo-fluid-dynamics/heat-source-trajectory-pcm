@@ -4,8 +4,8 @@ import pde
 
 
 def run():
-    #run_default()
-    run_with_neumann_inner_bc()
+    run_default()
+    #run_with_neumann_inner_bc()
     #run_with_dirichlet_outer_bc()
     #run_turn()
     #run_s_turn()
@@ -16,8 +16,6 @@ def run():
 
 def run_default():
     traj = trajectory.Trajectory()
-    traj.run()
-    traj.input.step_count += 2
     traj.run()
 
 
