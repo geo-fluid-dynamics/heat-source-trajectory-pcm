@@ -68,7 +68,7 @@ class PDE:
 
 
     def set_parameters(self, state):
-        assert(self.body.input.geometry_name == 'hemisphere_cylinder_shell') # @todo: Generalize ramp BC handling.
+        assert(self.body.input.geometry_name == 'hyper_shell')
         parameters_to_set = {
             'sizes': self.input.sizes,
             'transformations': [state[0], state[1], state[2]],
@@ -81,11 +81,6 @@ class PDE:
             'dirichlet_boundary_values': self.input.dirichlet_boundary_values,
             'neumann_boundary_ids': self.input.neumann_boundary_ids,
             'neumann_boundary_values': self.input.neumann_boundary_values,
-            'dirichlet_ramp_boundary_ids': self.input.dirichlet_ramp_boundary_ids,
-            'dirichlet_ramp_start_points': self.input.dirichlet_ramp_start_points,
-            'dirichlet_ramp_end_points': self.input.dirichlet_ramp_end_points,
-            'dirichlet_ramp_start_values': self.input.dirichlet_ramp_start_values,
-            'dirichlet_ramp_end_values': self.input.dirichlet_ramp_end_values
             }
         for key, value in parameters_to_set.items():
             set_parameter(self.run_input_file_name, key, value)
