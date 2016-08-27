@@ -41,9 +41,7 @@ class Trajectory:
         # @todo: For a case with ten trajectory steps, it was observed that the minimized state was not tipping all
         #        the way against the melt boundary on steps 7 and 9. This is an open issue.
         reference_length = self.body.input.reference_length
-        bounds = ((self.state[0] - reference_length, self.state[0] + reference_length),
-                  (self.state[1] - reference_length, self.state[1] + reference_length),
-                  (self.state[2] - max_turn_angle, self.state[2] + max_turn_angle))
+        bounds = ((0., 0.), (self.state[1] - reference_length, self.state[1] + reference_length), (0., 0.))
         # Verify that the initial guess does not violate any constraints.
         epsilon = 1e-6
         constraint_values = constraints(self.state)
