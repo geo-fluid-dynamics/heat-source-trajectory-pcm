@@ -3,6 +3,7 @@ import numpy as np
 import math
 import os
 import matplotlib.pyplot as plt
+import pandas
 
 import inputs
 import pde
@@ -20,10 +21,20 @@ class Trajectory:
         self.state = self.reference_state
         self.old_state = self.state
         self.step = 0
+        self.time = 0.
+        self.time_history = self.make_time_history_row()
 
 
     def run_step(self):
+        self.pde.end_time = self.input.time_step
         self.pde.solve(self)
+
+        def increment_data():
+            self.time += self.input.time_step
+            self.step += 1
+            new_row = self.make_time_history_row()
+            print(new_row)
+            self.time_history = self.time_history.append(new_row)
 
         def objective(x):
             gravity_aligned_axis = 1
@@ -46,8 +57,7 @@ class Trajectory:
         epsilon = 1e-6
         constraint_values = constraints(self.state)
         if any(constraint_values < -epsilon):
-            print "Stuck in the ice! Can't move yet."
-            self.step += 1
+            increment_data()
             return
         assert(not any(constraint_values < -epsilon))
         #
@@ -63,20 +73,31 @@ class Trajectory:
         # @todo: Warn if solution is on boundary.
 
         #
-        self.step += 1
+        increment_data()
+
+
+    def make_time_history_row(self):
+        return pandas.DataFrame({'step': self.step, 'time': self.time,
+                                'lateral': self.state[0], 'depth': self.state[1], 'rotation': self.state[2]},
+                                index=[self.step])
 
 
     def run(self):
         print("Running trajectory \'"+self.input.name+'\'')
         if not os.path.exists(self.input.name):
             os.makedirs(self.input.name)
+        print(self.time_history)
+        self.pde.n_adaptive_pre_refinement_steps = 0
         while self.step < self.input.step_count:
-            print('Step = '+str(self.step))
             self.old_state = self.state
             self.run_step()
             self.plot_frame()
             self.pde.interpolate_old_field = True
+            self.pde.n_adaptive_pre_refinement_steps = 4
 
+
+    def write_time_history(self):
+        self.time_history.to_csv(self.input.name+'_time_history.csv')
 
     # @todo: plot frames with Paraview
 
@@ -103,6 +124,16 @@ class Trajectory:
         plt.title('Step '+str(self.step))
         plt.savefig(self.input.name+'\\trajectory_frame_'+str(self.step))
         plt.cla()
+
+
+    def plot_time_history(self):
+        fig = plt.figure()
+        plt.xlabel('Time [time units]')
+        plt.ylabel('Depth [distance units]')
+        plt.grid()
+        axes = fig.add_subplot(111)
+        axes.plot(self.time_history[:,0], self.time_history[:,2], label=self.input.name)
+        axes.autoscale_view(True,True,True)
 
 
     def test(self):

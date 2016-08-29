@@ -2,6 +2,7 @@
 class TrajectoryInputs:
     name = 'default'
     step_count = 5
+    time_step = 0.02
     # @todo: Generalize the plot view window
     plot_xlim = [-1.5, 1.5]
     plot_ylim = [-3., 1.5]
@@ -22,7 +23,6 @@ class PDEInputs:
     exe_path = '/mnt/c/Users/Alexander/UbuntuShared/dimice-heat-dealii/bin/heat_problem'
     working_dir = 'C:\\Users\\Alexander\\UbuntuShared\\run\\'
     semi_implicit_theta = 0.7
-    end_time = 0.02
     time_step = 0.001
     max_cells = 1000
     dirichlet_boundary_ids = [1]

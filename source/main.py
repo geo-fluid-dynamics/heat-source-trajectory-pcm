@@ -1,10 +1,12 @@
 #!/usr/bin/python
 import trajectory
 import pde
-
+import matplotlib.pyplot as plt
+import pandas
 
 def run():
-    run_default()
+    convergence_study()
+    #run_default()
     #run_with_neumann_inner_bc()
     #run_with_dirichlet_outer_bc()
     #run_turn()
@@ -12,11 +14,32 @@ def run():
     #run_smooth_s_turn()
     #run_turn_with_ramped_nose_bc()
     #run_s_turn_with_narrow_body()
-    
+
+def convergence_study():
+    end_time = 0.1
+    step_counts = [2, 4, 8]
+    print('Running '+str(len(step_counts))+' trajectories.')
+    for i, step_count in enumerate(step_counts):
+        traj = trajectory.Trajectory()
+        traj.input.name = 'cs_'+str(i)
+        traj.input.step_count = step_count
+        traj.input.time_step = end_time/step_count
+        traj.pde.input.time_step = traj.input.time_step/10
+        traj.run()
+        new_rows = traj.time_history
+        new_rows['step_count'] = step_count
+        if i == 0:
+            table = new_rows
+        else:
+            table = table.append(new_rows)
+    table.to_csv('convergence_study_table.csv')
+
 
 def run_default():
     traj = trajectory.Trajectory()
     traj.run()
+    print(traj.time_history)
+    traj.write_time_history()
 
 
 def run_with_neumann_inner_bc():

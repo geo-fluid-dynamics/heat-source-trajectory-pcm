@@ -42,7 +42,7 @@ class PDE:
             bash_command =self.input.exe_path+' '+self.run_input_file_name
             subprocess.call('bash -c \''+bash_command+'\'')
         # Read the solution
-        solution_file_name = 'solution-'+str(int(math.ceil(self.input.end_time/self.input.time_step)))+'.vtk'
+        solution_file_name = 'solution-'+str(int(math.ceil(self.end_time/self.input.time_step)))+'.vtk'
         reader = vtk.vtkUnstructuredGridReader()
         reader.SetFileName(self.input.working_dir+solution_file_name)
         reader.Update()
@@ -73,9 +73,10 @@ class PDE:
             'sizes': self.input.sizes,
             'transformations': [state[0], state[1], state[2]],
             'semi_implicit_theta': self.input.semi_implicit_theta,
-            'end_time': self.input.end_time,
+            'end_time': self.end_time,
             'time_step': self.input.time_step,
             'interpolate_old_field': self.interpolate_old_field,
+            'n_adaptive_pre_refinement_steps': self.n_adaptive_pre_refinement_steps,
             'max_cells': self.input.max_cells,
             'dirichlet_boundary_ids': self.input.dirichlet_boundary_ids,
             'dirichlet_boundary_values': self.input.dirichlet_boundary_values,
