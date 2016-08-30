@@ -24,7 +24,9 @@ class PDEInputs:
     working_dir = 'C:\\Users\\Alexander\\UbuntuShared\\run\\'
     semi_implicit_theta = 0.7
     time_step = 0.001
-    max_cells = 1000
+    max_cells = 10000
+    initial_boundary_refinement = 5
+    n_adaptive_pre_refinement_steps = 0
     dirichlet_boundary_ids = [1]
     dirichlet_boundary_values = [-1.]
     neumann_boundary_ids = [0]

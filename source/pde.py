@@ -27,10 +27,12 @@ class PDE:
         if not os.path.exists(self.input.working_dir):
             os.makedirs(self.input.working_dir)
         with cd(self.input.working_dir):
-            if not os.path.exists(self.default_parameter_file_name):
-                # This will generate the default parameter file.
-                command = 'bash -c \''+self.input.exe_path+'\''
-                subprocess.call(command)
+            # Clean the working dir
+            if os.path.exists(self.default_parameter_file_name):
+                os.remove(self.default_parameter_file_name)
+            # Generate the default parameter file.
+            command = 'bash -c \''+self.input.exe_path+'\''
+            subprocess.call(command)
 
 
     def solve(self, trajectory):
@@ -76,6 +78,7 @@ class PDE:
             'end_time': self.end_time,
             'time_step': self.input.time_step,
             'interpolate_old_field': self.interpolate_old_field,
+            'initial_boundary_refinement': self.input.initial_boundary_refinement,
             'n_adaptive_pre_refinement_steps': self.n_adaptive_pre_refinement_steps,
             'max_cells': self.input.max_cells,
             'dirichlet_boundary_ids': self.input.dirichlet_boundary_ids,

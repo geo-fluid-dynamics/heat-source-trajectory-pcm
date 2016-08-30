@@ -93,7 +93,6 @@ class Trajectory:
             self.run_step()
             self.plot_frame()
             self.pde.interpolate_old_field = True
-            self.pde.n_adaptive_pre_refinement_steps = 4
 
 
     def write_time_history(self):
