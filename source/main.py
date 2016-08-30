@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 import pandas
 
 def run():
+    run_quick()
+    #outer_boundary_offset_sensitivity_study()
     #spatial_grid_convergence_study()
-    traj_time_convergence_study()
+    #traj_time_convergence_study()
+    #traj_space_convergence_study()
     #pde_time_convergence_study()
     #time_convergence_study()
     #run_default()
@@ -18,7 +21,85 @@ def run():
     #run_turn_with_ramped_nose_bc()
     #run_s_turn_with_narrow_body()
 
- 
+
+def run_quick():
+    end_time = 0.1
+    traj_steps = 2
+    pde_steps = 4
+    #
+    traj = trajectory.Trajectory()
+    traj.input.name = 'quick'
+    traj.input.time_step = end_time/traj_steps
+    traj.pde.input.time_step = traj.input.time_step/pde_steps
+    traj.pde.input.initial_boundary_refinement = 3
+    #
+    traj.run()
+    print(traj.time_history)
+    traj.write_time_history()
+
+
+def traj_space_convergence_study():
+    trajectory_end_time = 0.1
+    boundary_refinement_levels = [2, 3, 4, 5, 6]
+    total_pde_time_step_count = 32
+    pde_time_step_size = trajectory_end_time/total_pde_time_step_count
+    # @todo: Try keeping the PDE time step size constant instead.
+    trajectory_time_step_counts = [8]
+    theta = 1.0
+    print('Running '+str(len(boundary_refinement_levels))+' trajectories.')
+    for i, boundary_refinement_level in enumerate(boundary_refinement_levels):
+        traj = trajectory.Trajectory()
+        traj.input.name = 'traj_space_conv_ref'+str(boundary_refinement_level)
+        traj.input.step_count = trajectory_time_step_count
+        traj.input.time_step = trajectory_end_time/trajectory_time_step_count
+        traj.pde.input.initial_boundary_refinement = boundary_refinement_level
+        traj.pde.input.time_step = pde_time_step_size
+        traj.pde.input.semi_implicit_theta = theta
+        traj.run()
+        new_rows = traj.time_history
+        new_rows['trajectory_time_step_count'] = trajectory_time_step_count
+        new_rows['total_pde_time_step_count'] = total_pde_time_step_count
+        new_rows['pde_time_step_size'] = pde_time_step_size
+        new_rows['boundary_refinement_level'] = boundary_refinement_level
+        new_rows['theta'] = theta
+        if i == 0:
+            table = new_rows
+        else:
+            table = table.append(new_rows)
+        table.to_csv('traj_space_convergence_study_table.csv')
+  
+    
+def outer_boundary_offset_sensitivity_study():
+    trajectory_time_step_count = 4
+    trajectory_end_time = 0.1
+    pde_time_step_count = 32
+    outer_boundary_radii = [2, 3, 5]
+    boundary_refinement_levels = [3, 4, 5]
+    theta = 1.0
+    print('Running '+str(len(outer_boundary_radii))+' trajectories.')
+    for i, outer_boundary_radius in enumerate(outer_boundary_radii):
+        traj = trajectory.Trajectory()
+        traj.input.name = 'outer_radius_'+str(outer_boundary_radius)
+        traj.input.step_count = trajectory_time_step_count
+        traj.input.time_step = trajectory_end_time/trajectory_time_step_count
+        traj.pde.input.initial_boundary_refinement = boundary_refinement_levels[i]
+        traj.pde.input.time_step = traj.input.time_step/pde_time_step_count
+        traj.pde.input.semi_implicit_theta = theta
+        traj.pde.input.sizes[1] = outer_boundary_radius
+        traj.run()
+        new_rows = traj.time_history
+        new_rows['trajectory_time_step_count'] = trajectory_time_step_count
+        new_rows['pde_time_step_count'] = pde_time_step_count
+        new_rows['boundary_refinement_level'] = boundary_refinement_levels[i]
+        new_rows['outer_boundary_radius'] = outer_boundary_radius
+        new_rows['theta'] = theta
+        if i == 0:
+            table = new_rows
+        else:
+            table = table.append(new_rows)
+        table.to_csv('outer_boundary_radius_sensitivity_study.csv')
+
+    
 def spatial_grid_convergence_study():
     boundary_refinement_levels = [0, 1, 2, 3, 4, 5, 6]
     end_time = 0.10

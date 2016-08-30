@@ -59,14 +59,20 @@ class PDE:
         self.interpolator = scipy.interpolate.LinearNDInterpolator(data[:, :2], data[:, 2],
                                                                    fill_value=trajectory.environment.temperature)
         # Move some PDE solver outputs to archive directory
-        archive_dir = self.input.working_dir+trajectory.input.name+'\\step'+str(trajectory.step)+'\\'
+        archive_dir = self.input.working_dir+trajectory.input.name+'\\'
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
         for file_name in ['log.txt', 'pde.prm']:
-            shutil.move(os.path.join(self.input.working_dir, file_name), os.path.join(archive_dir, file_name))
+            shutil.move(os.path.join(self.input.working_dir, file_name), 
+                os.path.join(archive_dir, 'step'+str(trajectory.step)+'_'+file_name))
         for file in os.listdir(self.input.working_dir):
             if file.endswith('.vtk'):
-                shutil.move(os.path.join(self.input.working_dir, file), os.path.join(archive_dir, file))
+                pde_step_count = round(trajectory.input.time_step/self.input.time_step)
+                old_solution_number = int((file.replace('.vtk', '')).replace('solution-', ''))
+                solution_number = int(pde_step_count*trajectory.step + old_solution_number)
+                new_file = 'solution-'+str(solution_number)+'.vtk'
+                shutil.move(os.path.join(self.input.working_dir, file),
+                    os.path.join(archive_dir, new_file))
 
 
     def set_parameters(self, state):
