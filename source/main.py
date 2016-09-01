@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import pandas
 
 def run():
-    run_quick()
+    #run_quick()
     #outer_boundary_offset_sensitivity_study()
     #spatial_grid_convergence_study()
-    #traj_time_convergence_study()
+    traj_refinement_study()
     #traj_space_convergence_study()
     #pde_time_convergence_study()
     #time_convergence_study()
@@ -38,6 +38,38 @@ def run_quick():
     traj.write_time_history()
 
 
+def traj_refinement_study():
+    pde_grid_convergence_order = 2 # Observed 2.790
+    pde_time_convergence_order = 1 # Observed 1.012
+    trajectory_end_time = 0.1
+    base_boundary_refinement_level = 2
+    pde_time_step_count = 32
+    trajectory_time_step_counts = [2, 4, 8, 16, 32]
+    theta = 1.0
+    print('Running '+str(len(trajectory_time_step_counts))+' trajectories.')
+    for i, trajectory_time_step_count in enumerate(trajectory_time_step_counts):
+        traj = trajectory.Trajectory()
+        traj.input.name = 'traj_tcs_n'+str(trajectory_time_step_count)
+        traj.input.step_count = trajectory_time_step_count
+        traj.input.time_step = trajectory_end_time/trajectory_time_step_count
+        # The PDE must be refined proportionally to the number of trajectory time steps,
+        # or else errors will compound and the trajectory will drift.
+        traj.pde.input.initial_boundary_refinement = trajectory_time_step_count/pde_grid_convergence_order
+        traj.pde.input.time_step = traj.input.time_step/pde_time_step_count*pde_time_convergence_order
+        traj.pde.input.semi_implicit_theta = theta
+        traj.run()
+        new_rows = traj.time_history
+        new_rows['trajectory_time_step_count'] = trajectory_time_step_count
+        new_rows['pde_time_step_count'] = pde_time_step_count
+        new_rows['boundary_refinement_level'] = traj.pde.input.initial_boundary_refinement
+        new_rows['theta'] = theta
+        if i == 0:
+            table = new_rows
+        else:
+            table = table.append(new_rows)
+        table.to_csv('traj_time_convergence_study_table_p3.csv')
+    
+    
 def traj_space_convergence_study():
     trajectory_end_time = 0.1
     boundary_refinement_levels = [2, 3, 4, 5, 6]
@@ -127,7 +159,7 @@ def pde_time_convergence_study():
     boundary_refinement_level = 3
     trajectory_time_step_count = 1
     pde_time_step_counts = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
-    theta = 1.0
+    theta = 0.5
     print('Running '+str(len(pde_time_step_counts))+' trajectories.')
     for i, pde_time_step_count in enumerate(pde_time_step_counts):
         traj = trajectory.Trajectory()
@@ -149,13 +181,12 @@ def pde_time_convergence_study():
         table.to_csv('single_step_pde_time_convergence_study_table.csv')
 
         
-def traj_time_convergence_study():
+def old_traj_time_convergence_study():
     trajectory_end_time = 0.1
-    boundary_refinement_level = 3
-    total_pde_time_step_count = 32
-    pde_time_step_size = trajectory_end_time/total_pde_time_step_count
+    boundary_refinement_level = 5
+    pde_time_step_count = 256
     # @todo: Try keeping the PDE time step size constant instead.
-    trajectory_time_step_counts = [1, 2, 4, 8, 16]
+    trajectory_time_step_counts = [16, 32, 64, 128, 256]
     theta = 1.0
     print('Running '+str(len(trajectory_time_step_counts))+' trajectories.')
     for i, trajectory_time_step_count in enumerate(trajectory_time_step_counts):
@@ -164,21 +195,19 @@ def traj_time_convergence_study():
         traj.input.step_count = trajectory_time_step_count
         traj.input.time_step = trajectory_end_time/trajectory_time_step_count
         traj.pde.input.initial_boundary_refinement = boundary_refinement_level
-        #traj.pde.input.time_step = traj.input.time_step/pde_time_step_count
-        traj.pde.input.time_step = pde_time_step_size
+        traj.pde.input.time_step = traj.input.time_step/pde_time_step_count
         traj.pde.input.semi_implicit_theta = theta
         traj.run()
         new_rows = traj.time_history
         new_rows['trajectory_time_step_count'] = trajectory_time_step_count
-        new_rows['total_pde_time_step_count'] = total_pde_time_step_count
-        new_rows['pde_time_step_size'] = pde_time_step_size
+        new_rows['pde_time_step_count'] = pde_time_step_count
         new_rows['boundary_refinement_level'] = boundary_refinement_level
         new_rows['theta'] = theta
         if i == 0:
             table = new_rows
         else:
             table = table.append(new_rows)
-        table.to_csv('traj_time_convergence_study_table_constant_pde_timestep.csv')
+        table.to_csv('traj_time_convergence_study_table.csv')
 
 
 def run_default():
