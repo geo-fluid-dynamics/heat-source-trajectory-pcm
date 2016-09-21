@@ -28,20 +28,20 @@ def run():
 
 
 def run_superposed_advection():
-    traj = Trajectory()
+    traj = trajectory.Trajectory()
     
     traj.input.name = 'superposed_advection'
     
     traj.input.step_count = 3
-    traj.velocity = [0., 0.001]
+    traj.state.velocity = [0., 0.001]
     
     traj.pde.input.geometry.dim = 2
     traj.pde.input.geometry.grid_name = 'hyper_shell'
     traj.pde.input.geometry.sizes = [1.e-2, 2.e-2]
     
-    traj.pde.input.use_physical_diffusivity = true
+    traj.pde.input.use_physical_diffusivity = True
     
-    traj.pde.input.bc.implementation_types = [natural, strong]
+    traj.pde.input.bc.implementation_types = ['natural', 'strong']
     traj.pde.input.bc.function_names = ['constant', 'constant']
     traj.pde.input.bc.function_double_arguments = [2.e-3, 1.]
     
@@ -53,14 +53,12 @@ def run_superposed_advection():
     traj.pde.input.refinement.initial_global_cycles = 2
     
     traj.pde.input.time.semi_implicit_theta = 1.
-    traj.pde.input.time.time_step = 0.1
+    traj.pde.input.time.step_size = 0.1
     
     
     traj.run()
     print(traj.time_history)
     traj.write_time_history()
-    
-    
     
     
 def spatial_adaptive_grid_convergence_study():

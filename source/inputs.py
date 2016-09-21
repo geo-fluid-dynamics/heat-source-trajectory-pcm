@@ -1,3 +1,4 @@
+from collections import namedtuple
 
 class TrajectoryInputs:
     name = 'default'
@@ -19,23 +20,39 @@ class EnvironmentInputs:
     material = {'name': 'water-ice', 'melting temperature': 0.}
 
 
+class PDEGeometryInputs:
+    grid_name = 'hyper_shell'
+    sizes = [0.5, 1.]
+    transformations = [0., 0., 0.]
+
+class PDETimeInputs:
+    semi_implicit_theta = 0.7
+    step_size = 0.001
+
+class PDERefinementInputs:
+    boundaries_to_refine = 0
+    initial_boundary_cycles = 4
+    initial_global_cycles = 2
+    
+class PDEBoundaryConditionsInputs:
+    implementation_types = ['natural', 'strong']
+    function_names = ['constant', 'constant']
+    function_double_arguments = [1., -1.]
+    
+class PDEInitialValuesInputs:
+    function_name = 'constant'
+    function_double_arguments = [-1.]
+    
 class PDEInputs:
     exe_path = '/mnt/c/Users/Alexander/UbuntuShared/dimice-heat-dealii/bin/heat_problem'
     working_dir = 'C:\\Users\\Alexander\\UbuntuShared\\run\\'
-    semi_implicit_theta = 0.7
-    time_step = 0.001
-    max_cells = 10000
-    initial_boundary_refinement = 5
-    initial_global_refinement = 0
-    n_adaptive_pre_refinement_steps = 0
-    refinement_interval = 0
-    n_refinement_cycles = 0
-    refine_fraction = 0.6
-    dirichlet_boundary_ids = [1]
-    dirichlet_boundary_values = [-1.]
-    neumann_boundary_ids = [0]
-    neumann_boundary_values = [10.]
+    geometry = PDEGeometryInputs()
+    refinement = PDERefinementInputs()
+    bc = PDEBoundaryConditionsInputs()
+    iv = PDEInitialValuesInputs()
+    time = PDETimeInputs()
+    
     def __init__(self, body):
         R = body.input.sphere_radius
-        self.sizes = [R, 2*R]
+        self.geometry.sizes = [R, 2*R]
 

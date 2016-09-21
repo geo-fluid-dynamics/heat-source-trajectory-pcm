@@ -6,7 +6,6 @@ import pandas
 import shutil
 import os
 import subprocess
-import fileinput
 import shutil
 import scipy
 
@@ -14,8 +13,6 @@ import inputs
 
 
 class PDE:
-
-    default_parameter_file_name = 'default.prm'
 
     def __init__(self, body):
         self.input = inputs.PDEInputs(body)
@@ -26,25 +23,17 @@ class PDE:
         self.interpolator = []
         if not os.path.exists(self.input.working_dir):
             os.makedirs(self.input.working_dir)
-        with cd(self.input.working_dir):
-            # Clean the working dir
-            if os.path.exists(self.default_parameter_file_name):
-                os.remove(self.default_parameter_file_name)
-            # Generate the default parameter file.
-            command = 'bash -c \''+self.input.exe_path+'\''
-            subprocess.call(command)
 
 
     def solve(self, trajectory):
         with cd(self.input.working_dir):
-            # Prepare input file for PDE solver
-            shutil.copyfile(self.default_parameter_file_name, self.run_input_file_name)
-            self.set_parameters(trajectory.state)
+            self.set_parameters(trajectory.state, trajectory.input.time_step)
             # Run the PDE solver
             bash_command =self.input.exe_path+' '+self.run_input_file_name
             subprocess.call('bash -c \''+bash_command+'\'')
         # Read the solution
-        solution_file_name = 'solution-'+str(int(math.ceil(self.end_time/self.input.time_step)))+'.vtk'
+        solution_file_name = 'solution-'+ \
+            str(int(math.ceil(trajectory.input.time_step/self.input.time.step_size)))+'.vtk'
         reader = vtk.vtkUnstructuredGridReader()
         reader.SetFileName(self.input.working_dir+solution_file_name)
         reader.Update()
@@ -57,7 +46,7 @@ class PDE:
         self.data = table.as_matrix()
         #
         self.interpolator = scipy.interpolate.LinearNDInterpolator(data[:, :2], data[:, 2],
-                                                                   fill_value=trajectory.environment.temperature)
+            fill_value=trajectory.environment.temperature)
         # Move some PDE solver outputs to archive directory
         archive_dir = self.input.working_dir+trajectory.input.name+'\\'
         if not os.path.exists(archive_dir):
@@ -75,30 +64,28 @@ class PDE:
                     os.path.join(archive_dir, new_file))
 
 
-    def set_parameters(self, position, orientation, velocity):
+    def set_parameters(self, state, end_time):
         
-        assert(self.body.input.geometry_name == 'hyper_shell')
         # @todo: Separate the geometry definitions of the body and the PDE field.
-        
-        # @todo: This method cannot differentiate between sub-subsections (or further children)
         
         if self.interpolate_old_field:
             iv_function_name = 'interpolate_old_field'
         else:
             iv_function_name = 'constant'
         
-        parameters_to_set = {
+        parameters = {
             'pde': {
-                'convection_velocity': velocity},
+                'use_physical_diffusivity': self.input.use_physical_diffusivity,
+                'convection_velocity': state.velocity},
             'geometry': {
                 'dim': self.input.geometry.dim,
                 'grid_name': self.input.geometry.grid_name,
                 'sizes': self.input.geometry.sizes,
-                'transformations': [position[0], position[1], orientation[0]]},
+                'transformations': [state.position[0], state.position[1], state.orientation[0]]},
             'refinement': {
                 'boundaries_to_refine': self.input.refinement.boundaries_to_refine,
                 'initial_boundary_refinement': self.input.refinement.initial_boundary_cycles,
-                'initial_global_refinement': self.input.refinement.initial_global_cycles,
+                'initial_global_refinement': self.input.refinement.initial_global_cycles},
             'boundary_conditions': {
                 'function_names': self.input.bc.function_names,
                 'function_double_arguments': self.input.bc.function_double_arguments},
@@ -107,15 +94,21 @@ class PDE:
                 'function_double_arguments': self.input.iv.function_double_arguments},
             'time': {
                 'semi_implicit_theta': self.input.time.semi_implicit_theta,
-                'end_time': self.time.end_time,
-                'time_step': self.input.time.time_step}
+                'time_step': self.input.time.step_size,
+                'end_time': end_time}
             }
-            
-        for subsection_key, subsection_dict in parameters_to_set.items():
-            for key, value in subsection_dict.items():
-                set_parameter(self.run_input_file_name, subsection_key, key, value)
+         
+        write_parameters(self.run_input_file_name, parameters)
+         
 
-
+def write_parameters(file_name, parameters):
+    file = open(file_name, 'w')
+    for subsection_key, subsection_dict in parameters.items():
+        file.write('subsection '+subsection_key)
+        for key, value in subsection_dict.items():
+            file.write('    set '+key+' = '+strip_brackets(str(value).lower()))
+        
+        
 def set_parameter(file_name, subsection_key, key, value):
     found_subsection_key = False
     found_key = False

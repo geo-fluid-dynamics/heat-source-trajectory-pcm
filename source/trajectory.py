@@ -10,6 +10,11 @@ import pde
 import body
 import plots
 
+class State:
+    position = np.array((0., 0., 0.))
+    orientation = np.array((0., 0., 0.))
+    velocity = np.array((0., 0., 0.))
+
 class Trajectory:
 
     def __init__(self):
@@ -17,16 +22,14 @@ class Trajectory:
         self.body = body.Body()
         self.pde = pde.PDE(self.body)
         self.environment = inputs.EnvironmentInputs()
-        self.reference_state = np.array((0., 0., 0.))
-        self.state = self.reference_state
-        self.old_state = self.state
+        self.state = State();
         self.step = 0
         self.time = 0.
         self.time_history = self.make_time_history_row()
 
 
     def run_step(self):
-        self.pde.end_time = self.input.time_step
+        self.pde.input.time.end_time = self.input.time_step
         self.pde.solve(self)
 
         def increment_data():
@@ -43,7 +46,7 @@ class Trajectory:
         def constraints(x):
             return self.pde.interpolator(self.body.get_hull_points(x))
 
-        initial_hull_points = self.body.get_hull_points(self.state)
+        initial_hull_points = self.body.get_hull_points(self.state.position, self.state.orientation)
         # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
         # We must limit x away from the boundary of the domain.
         # Since the domain will be relatively large compared to the body, and movements should be in small increments.
@@ -52,7 +55,8 @@ class Trajectory:
         # @todo: For a case with ten trajectory steps, it was observed that the minimized state was not tipping all
         #        the way against the melt boundary on steps 7 and 9. This is an open issue.
         reference_length = self.body.input.reference_length
-        bounds = ((0., 0.), (self.state[1] - reference_length, self.state[1] + reference_length), (0., 0.))
+        bounds = ((0., 0.), (self.state.position[1] - reference_length,
+            self.state.position[1] + reference_length), (0., 0.))
         # Verify that the initial guess does not violate any constraints.
         epsilon = 1e-6
         constraint_values = constraints(self.state)
@@ -61,7 +65,10 @@ class Trajectory:
             return
         assert(not any(constraint_values < -epsilon))
         #
-        output = minimize(fun=objective, x0=self.state, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
+        x0 = np.array([0., 0., 0.])
+        x0[:1] = self.state.position
+        x0[2] = self.state.orientation
+        output = minimize(fun=objective, x0=x0, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
         # Verify that the solution does not violate any constraints.
         # scipy.minimize likes to return "success" even though constraints are violated.
         constraint_values = constraints(output.x)
@@ -69,7 +76,8 @@ class Trajectory:
         #
         assert(not any(np.isnan(output.x)))
         #
-        self.state = output.x
+        self.state.position = output.x[:1]
+        self.state.orientation = output.x[2]
         # @todo: Warn if solution is on boundary.
 
         #
@@ -78,7 +86,9 @@ class Trajectory:
 
     def make_time_history_row(self):
         return pandas.DataFrame({'step': self.step, 'time': self.time,
-                                'lateral': self.state[0], 'depth': self.state[1], 'rotation': self.state[2]},
+                                'lateral': self.state.position[0],
+                                'depth': self.state.position[1],
+                                'rotation': self.state.orientation[0]},
                                 index=[self.step])
 
 
@@ -87,14 +97,11 @@ class Trajectory:
         if not os.path.exists(self.input.name):
             os.makedirs(self.input.name)
         print(self.time_history)
-        n_adaptive_pre_refinement_steps = self.pde.input.n_adaptive_pre_refinement_steps
-        self.pde.input.n_adaptive_pre_refinement_steps = 0
         while self.step < self.input.step_count:
             self.old_state = self.state
             self.run_step()
             self.plot_frame()
             self.pde.interpolate_old_field = True
-            self.pde.input.n_adaptive_pre_refinement_steps = n_adaptive_pre_refinement_steps
             # @todo: Superpose advection
 
 
