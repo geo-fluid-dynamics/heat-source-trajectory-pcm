@@ -75,44 +75,59 @@ class PDE:
                     os.path.join(archive_dir, new_file))
 
 
-    def set_parameters(self, state):
+    def set_parameters(self, position, orientation, velocity):
+        
         assert(self.body.input.geometry_name == 'hyper_shell')
+        # @todo: Separate the geometry definitions of the body and the PDE field.
+        
+        # @todo: This method cannot differentiate between sub-subsections (or further children)
+        
+        if self.interpolate_old_field:
+            iv_function_name = 'interpolate_old_field'
+        else:
+            iv_function_name = 'constant'
+        
         parameters_to_set = {
-            'sizes': self.input.sizes,
-            'transformations': [state[0], state[1], state[2]],
-            'semi_implicit_theta': self.input.semi_implicit_theta,
-            'end_time': self.end_time,
-            'time_step': self.input.time_step,
-            'interpolate_old_field': self.interpolate_old_field,
-            'initial_boundary_refinement': self.input.initial_boundary_refinement,
-            'initial_global_refinement': self.input.initial_global_refinement,
-            'n_adaptive_pre_refinement_steps': self.input.n_adaptive_pre_refinement_steps,
-            'refinement_interval': self.input.refinement_interval,
-            'n_refinement_cycles': self.input.n_refinement_cycles,
-            'refine_fraction': self.input.refine_fraction,
-            'max_cells': self.input.max_cells,
-            'dirichlet_boundary_ids': self.input.dirichlet_boundary_ids,
-            'dirichlet_boundary_values': self.input.dirichlet_boundary_values,
-            'neumann_boundary_ids': self.input.neumann_boundary_ids,
-            'neumann_boundary_values': self.input.neumann_boundary_values,
+            'pde': {
+                'convection_velocity': velocity},
+            'geometry': {
+                'dim': self.input.geometry.dim,
+                'grid_name': self.input.geometry.grid_name,
+                'sizes': self.input.geometry.sizes,
+                'transformations': [position[0], position[1], orientation[0]]},
+            'refinement': {
+                'boundaries_to_refine': self.input.refinement.boundaries_to_refine,
+                'initial_boundary_refinement': self.input.refinement.initial_boundary_cycles,
+                'initial_global_refinement': self.input.refinement.initial_global_cycles,
+            'boundary_conditions': {
+                'function_names': self.input.bc.function_names,
+                'function_double_arguments': self.input.bc.function_double_arguments},
+            'initial_values': {
+                'function_name': iv_function_name,
+                'function_double_arguments': self.input.iv.function_double_arguments},
+            'time': {
+                'semi_implicit_theta': self.input.time.semi_implicit_theta,
+                'end_time': self.time.end_time,
+                'time_step': self.input.time.time_step}
             }
-        for key, value in parameters_to_set.items():
-            set_parameter(self.run_input_file_name, key, value)
-    
-
-    def test(self):
-        state = (0., 0., 0.)
-        data = solve_pde(0, state, state)
-        print(data)
+            
+        for subsection_key, subsection_dict in parameters_to_set.items():
+            for key, value in subsection_dict.items():
+                set_parameter(self.run_input_file_name, subsection_key, key, value)
 
 
-def set_parameter(file_name, key, value):
+def set_parameter(file_name, subsection_key, key, value):
+    found_subsection_key = False
     found_key = False
     for line in fileinput.input(files=file_name, inplace=1):
-        if 'set '+key in line:
+        if 'subsection '+subsection_key in line:
+            found_subsection_key = True
+        if found_subsection_key & 'set '+key in line:
             found_key = True
             line = '  set '+key+' = '+strip_brackets(str(value).lower())
         print(line.rstrip())
+    if not found_subsection_key:
+        raise NameError(subection_key)
     if not found_key:
         raise NameError(key)
 

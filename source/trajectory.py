@@ -95,6 +95,7 @@ class Trajectory:
             self.plot_frame()
             self.pde.interpolate_old_field = True
             self.pde.input.n_adaptive_pre_refinement_steps = n_adaptive_pre_refinement_steps
+            # @todo: Superpose advection
 
 
     def write_time_history(self):
