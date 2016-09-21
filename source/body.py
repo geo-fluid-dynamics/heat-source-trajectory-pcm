@@ -3,17 +3,16 @@ import math
 
 import inputs
 
+
 class Body:
 
     def __init__(self):
         self.input = inputs.BodyInputs()
 
-
     def get_hull_points(self, state):
         points = make_sphere_points(self.input.sphere_radius)
         points = move(points, state)
         return points
-
 
     def get_center_of_gravity(self, state):
         return centroid(self.get_hull_points(state))  # Assume uniform density within the body
@@ -66,12 +65,13 @@ def centroid(points):
     return np.array((sum_x/length, sum_y/length))
 
 
-def move(old_points, x):
-    assert(x.size == 3)  # 2D
-    theta = x[2]
+def move(old_points, state):
+    assert(state.position.size == 2)  # 2D
+    assert(state.orientation.size == 1)
+    theta = state.orientation[0]
     rotation_matrix = np.matrix([[math.cos(theta), math.sin(theta)], [-math.sin(theta), math.cos(theta)]])
     points = np.matrix(old_points)*rotation_matrix
-    points = points + x[:2]
+    points = points + state.position[:2]
     return np.array(points)
 
 
