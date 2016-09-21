@@ -26,7 +26,11 @@ class PDEInputs:
     time_step = 0.001
     max_cells = 10000
     initial_boundary_refinement = 5
+    initial_global_refinement = 0
     n_adaptive_pre_refinement_steps = 0
+    refinement_interval = 0
+    n_refinement_cycles = 0
+    refine_fraction = 0.6
     dirichlet_boundary_ids = [1]
     dirichlet_boundary_values = [-1.]
     neumann_boundary_ids = [0]

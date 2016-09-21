@@ -5,10 +5,12 @@ import matplotlib.pyplot as plt
 import pandas
 
 def run():
-    #run_quick()
+    #spatial_adaptive_grid_convergence_study()
+    #run_adaptive()
     #outer_boundary_offset_sensitivity_study()
-    #spatial_grid_convergence_study()
-    traj_refinement_study()
+    spatial_grid_convergence_study_boundary_refine()
+    spatial_grid_convergence_study_global_refine()
+    #traj_refinement_study()
     #traj_space_convergence_study()
     #pde_time_convergence_study()
     #time_convergence_study()
@@ -22,16 +24,51 @@ def run():
     #run_s_turn_with_narrow_body()
 
 
-def run_quick():
+def spatial_adaptive_grid_convergence_study():
+    max_cell_counts = [20, 40, 80, 160, 320, 640]
+    step_count = 1
+    for i, max_cell_count in enumerate(max_cell_counts):
+        traj = trajectory.Trajectory()
+        traj.input.name = 'single_step_gcs_adaptive_n'+str(max_cell_count)
+        #
+        traj.input.step_count = step_count
+        traj.input.time_step = 0.1
+        traj.pde.input.time_step = traj.input.time_step/32
+        #
+        traj.pde.input.max_cells = max_cell_count
+        traj.pde.input.initial_boundary_refinement = 0
+        traj.pde.input.initial_global_refinement = 1
+        traj.pde.input.n_adaptive_pre_refinement_steps = 4
+        traj.pde.input.refinement_interval = 1
+        traj.pde.input.n_refinement_cycles = 1
+        #
+        traj.run()
+        new_rows = traj.time_history
+        new_rows['max_cell_count'] = max_cell_count
+        if i == 0:
+            table = new_rows
+        else:
+            table = table.append(new_rows)
+        table.to_csv('spatial_adaptive_grid_convergence_study_table.csv')
+    
+    
+def run_adaptive():
     end_time = 0.1
-    traj_steps = 2
-    pde_steps = 4
+    pde_time_step_count = 32
     #
     traj = trajectory.Trajectory()
-    traj.input.name = 'quick'
-    traj.input.time_step = end_time/traj_steps
-    traj.pde.input.time_step = traj.input.time_step/pde_steps
-    traj.pde.input.initial_boundary_refinement = 3
+    traj.input.name = 'adaptive'
+    traj.input.step_count = 8
+    traj.input.time_step = end_time/traj.input.step_count
+    traj.pde.input.time_step = traj.input.time_step/pde_time_step_count
+    traj.pde.input.initial_boundary_refinement = 0
+    traj.pde.input.initial_global_refinement = 1
+    traj.pde.input.n_adaptive_pre_refinement_steps = 4
+    traj.pde.input.max_cells = 500
+    traj.pde.input.refinement_interval = 1
+    traj.pde.input.n_refinement_cycles = 1
+    traj.pde.input.time_step = traj.input.time_step/pde_time_step_count
+    traj.pde.input.semi_implicit_theta = 1.0
     #
     traj.run()
     print(traj.time_history)
@@ -44,7 +81,7 @@ def traj_refinement_study():
     trajectory_end_time = 0.1
     base_boundary_refinement_level = 2
     pde_time_step_count = 32
-    trajectory_time_step_counts = [2, 4, 8, 16, 32]
+    trajectory_time_step_counts = [2, 4, 8]
     theta = 1.0
     print('Running '+str(len(trajectory_time_step_counts))+' trajectories.')
     for i, trajectory_time_step_count in enumerate(trajectory_time_step_counts):
@@ -67,7 +104,7 @@ def traj_refinement_study():
             table = new_rows
         else:
             table = table.append(new_rows)
-        table.to_csv('traj_time_convergence_study_table_p3.csv')
+        table.to_csv('traj_time_convergence_study_table.csv')
     
     
 def traj_space_convergence_study():
@@ -132,17 +169,18 @@ def outer_boundary_offset_sensitivity_study():
         table.to_csv('outer_boundary_radius_sensitivity_study.csv')
 
     
-def spatial_grid_convergence_study():
-    boundary_refinement_levels = [0, 1, 2, 3, 4, 5, 6]
-    end_time = 0.10
+def spatial_grid_convergence_study_boundary_refine():
+    boundary_refinement_levels = [7, 8]
+    end_time = 0.02
     step_count = 1
+    pde_time_step_count = 32
     for i, level in enumerate(boundary_refinement_levels):
         traj = trajectory.Trajectory()
-        traj.input.name = 'single_step_gcs_ns'+str(level)
+        traj.input.name = 'gcs_boundary_n'+str(level)
         traj.pde.input.initial_boundary_refinement = level
         traj.input.step_count = step_count
         traj.input.time_step = end_time/step_count
-        traj.pde.input.time_step = traj.input.time_step/10
+        traj.pde.input.time_step = traj.input.time_step/pde_time_step_count
         traj.run()
         new_rows = traj.time_history
         new_rows['step_count'] = step_count
@@ -151,9 +189,33 @@ def spatial_grid_convergence_study():
             table = new_rows
         else:
             table = table.append(new_rows)
-        table.to_csv('single_step_spatial_grid_convergence_study_table.csv')
+        table.to_csv('spatial_grid_convergence_study_table_boundary_refine.csv')
         
 
+def spatial_grid_convergence_study_global_refine():
+    global_refinement_levels = [7, 8]
+    end_time = 0.02
+    pde_time_step_count = 32
+    step_count = 1
+    for i, level in enumerate(global_refinement_levels):
+        traj = trajectory.Trajectory()
+        traj.input.name = 'gcs_global_n'+str(level)
+        traj.pde.input.initial_boundary_refinement = 0
+        traj.pde.input.initial_global_refinement = level
+        traj.input.step_count = step_count
+        traj.input.time_step = end_time/step_count
+        traj.pde.input.time_step = traj.input.time_step/pde_time_step_count
+        traj.run()
+        new_rows = traj.time_history
+        new_rows['step_count'] = step_count
+        new_rows['global_refinement_level'] = level
+        if i == 0:
+            table = new_rows
+        else:
+            table = table.append(new_rows)
+        table.to_csv('spatial_grid_convergence_study_table_global_refine.csv')
+        
+        
 def pde_time_convergence_study():
     trajectory_end_time = 0.1
     boundary_refinement_level = 3

@@ -87,12 +87,14 @@ class Trajectory:
         if not os.path.exists(self.input.name):
             os.makedirs(self.input.name)
         print(self.time_history)
-        self.pde.n_adaptive_pre_refinement_steps = 0
+        n_adaptive_pre_refinement_steps = self.pde.input.n_adaptive_pre_refinement_steps
+        self.pde.input.n_adaptive_pre_refinement_steps = 0
         while self.step < self.input.step_count:
             self.old_state = self.state
             self.run_step()
             self.plot_frame()
             self.pde.interpolate_old_field = True
+            self.pde.input.n_adaptive_pre_refinement_steps = n_adaptive_pre_refinement_steps
 
 
     def write_time_history(self):
