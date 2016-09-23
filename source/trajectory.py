@@ -41,11 +41,21 @@ class Trajectory:
             self.time_history = self.time_history.append(new_row)
 
         def objective(x):
+            state = State()
+            if not (type(x) == type(state)):
+                state = State()
+                state.position[:2] = x[:2]
+                state.orientation[0] = x[2]
             gravity_aligned_axis = 1
-            return self.body.get_center_of_gravity(x)[gravity_aligned_axis]
+            return self.body.get_center_of_gravity(state)[gravity_aligned_axis]
 
         def constraints(x):
-            return self.pde.interpolator(self.body.get_hull_points(x))
+            state = State()
+            if not (type(x) == type(state)):
+                state = State()
+                state.position[:2] = x[:2]
+                state.orientation[0] = x[2]
+            return self.pde.interpolator(self.body.get_hull_points(state))
 
         # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
         # We must limit x away from the boundary of the domain.
@@ -69,8 +79,8 @@ class Trajectory:
         #
 
         x0 = np.array([0., 0., 0.])
-        x0[:2] = self.state.position
-        x0[2] = self.state.orientation
+        x0[:2] = self.state.position[:2]
+        x0[2] = self.state.orientation[0]
         output = minimize(fun=objective, x0=x0, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
         # Verify that the solution does not violate any constraints.
         # scipy.minimize likes to return "success" even though constraints are violated.
@@ -79,8 +89,8 @@ class Trajectory:
         #
         assert(not any(np.isnan(output.x)))
         #
-        self.state.position = output.x[:2]
-        self.state.orientation = output.x[2]
+        self.state.position[:2] = output.x[:2]
+        self.state.orientation[0] = output.x[2]
         # @todo: Warn if solution is on boundary.
 
         #
@@ -136,7 +146,7 @@ class Trajectory:
         plt.plot(points[:, 0], points[:, 1], '-r', label='Current State')
         plt.legend()
         plt.title('Step '+str(self.step))
-        plt.savefig(self.input.name+'\\trajectory_frame_'+str(self.step))
+        plt.savefig(self.input.name+'/trajectory_frame_'+str(self.step))
         plt.cla()
 
     def plot_time_history(self):

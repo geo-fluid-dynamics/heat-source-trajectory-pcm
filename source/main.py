@@ -16,13 +16,16 @@ def run_superposed_advection():
     
     t.input.name = 'superposed_advection'
     
-    t.input.step_count = 3
+    t.input.step_count = 5
     t.input.time_step_size = 10.
     t.state.velocity = [0., 0.001]
     
+    r = 1.e-2
+    t.body.input.sphere_radius = r
+    
     t.pde.input.geometry.dim = 2
     t.pde.input.geometry.grid_name = 'hyper_shell'
-    t.pde.input.geometry.sizes = [1.e-2, 2.e-2]
+    t.pde.input.geometry.sizes = [r, 2*r]
     
     t.pde.input.use_physical_diffusivity = True
     
@@ -34,7 +37,7 @@ def run_superposed_advection():
     t.pde.input.iv.function_double_arguments = -1.
     
     t.pde.input.refinement.boundaries_to_refine = 0
-    t.pde.input.refinement.initial_boundary_cycles = 4
+    t.pde.input.refinement.initial_boundary_cycles = 3
     t.pde.input.refinement.initial_global_cycles = 2
     
     t.pde.input.time.semi_implicit_theta = 1.

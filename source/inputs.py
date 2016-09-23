@@ -7,8 +7,8 @@ class TrajectoryInputs:
         self.step_count = 5
         self.time_step_size = 0.02
         # @todo: Generalize the plot view window
-        self.plot_xlim = [-1.5, 1.5]
-        self.plot_ylim = [-3., 1.5]
+        self.plot_xlim = [-.015, .015]
+        self.plot_ylim = [-.03, .015]
 
 
 class BodyInputs:
@@ -65,8 +65,7 @@ class PDESolverInputs:
 
 class PDEInputs:
     def __init__(self, body):
-        self.exe_path = '/mnt/c/Users/Alexander/UbuntuShared/dimice-pde-dealii/bin/heat_problem'
-        self.working_dir = 'C:\\Users\\Alexander\\UbuntuShared\\run\\Trajectory\\'
+        self.exe_path = '/home/zimmerman/dimice-pde-dealii/build/heat_problem'
         self.use_physical_diffusivity = True
         self.geometry = PDEGeometryInputs()
         self.refinement = PDERefinementInputs()

@@ -22,30 +22,19 @@ class PDE:
         self.interpolate_old_field = False
         self.data = []
         self.interpolator = []
-        if not os.path.exists(self.input.working_dir):
-            os.makedirs(self.input.working_dir)
 
     def solve(self, trajectory):
 
-        with cd(self.input.working_dir):
+        self.write_parameters(trajectory.state, trajectory.input.time_step_size)
 
-            self.write_parameters(trajectory.state, trajectory.input.time_step_size)
-
-            # Verify that subprocess is working
-            output = subprocess.check_output(['cmd', '/c', 'echo', 'hello'])
-            assert (output == 'hello\r\n')
-
-            # Run the PDE solver
-            bash_command = '"%s %s"' % (self.input.exe_path, self.run_input_file_name)
-
-            output = subprocess.check_output(
-                ['cmd', '/c', 'bash', '-c', bash_command])
+        # Run the PDE solver
+        subprocess.call([self.input.exe_path, self.run_input_file_name])
 
         # Read the solution
         solution_file_name = \
             'solution-'+str(int(math.ceil(trajectory.input.time_step_size/self.input.time.step_size)))+'.vtk'
         reader = vtk.vtkUnstructuredGridReader()
-        reader.SetFileName(self.input.working_dir+solution_file_name)
+        reader.SetFileName(solution_file_name)
         reader.Update()
         nodes = vtk_to_numpy(reader.GetOutput().GetPoints().GetData())
         u = vtk_to_numpy(reader.GetOutput().GetPointData().GetArray(0))
@@ -59,22 +48,22 @@ class PDE:
             data[:, :2], data[:, 2], fill_value=trajectory.environment.temperature)
 
         # Move some PDE solver outputs to archive directory
-        archive_dir = self.input.working_dir+trajectory.input.name+'\\'
+        archive_dir = trajectory.input.name+'/'
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
 
         for file_name in ['solution_table.txt', self.run_input_file_name]:
             shutil.move(
-                os.path.join(self.input.working_dir, file_name),
+                os.path.join('.', file_name),
                 os.path.join(archive_dir, 'step'+str(trajectory.step)+'_'+file_name))
 
-        for f in os.listdir(self.input.working_dir):
+        for f in os.listdir('.'):
             if f.endswith('.vtk'):
                 pde_step_count = round(trajectory.input.time_step_size/self.input.time.step_size)
                 old_solution_number = int((f.replace('.vtk', '')).replace('solution-', ''))
                 solution_number = int(pde_step_count*trajectory.step + old_solution_number)
                 new_file = 'solution-'+str(solution_number)+'.vtk'
-                shutil.move(os.path.join(self.input.working_dir, f), os.path.join(archive_dir, new_file))
+                shutil.move(os.path.join('.', f), os.path.join(archive_dir, new_file))
 
     def write_parameters(self, state, end_time):
 

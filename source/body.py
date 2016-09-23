@@ -66,8 +66,8 @@ def centroid(points):
 
 
 def move(old_points, state):
-    assert(state.position.size == 2)  # 2D
-    assert(state.orientation.size == 1)
+    assert(state.orientation[1] == 0.)  # Only rotation about z axis is supported.
+    assert(state.orientation[2] == 0.)  # Only rotation about z axis is supported.
     theta = state.orientation[0]
     rotation_matrix = np.matrix([[math.cos(theta), math.sin(theta)], [-math.sin(theta), math.cos(theta)]])
     points = np.matrix(old_points)*rotation_matrix
