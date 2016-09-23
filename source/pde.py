@@ -26,11 +26,21 @@ class PDE:
             os.makedirs(self.input.working_dir)
 
     def solve(self, trajectory):
+
         with cd(self.input.working_dir):
+
             self.write_parameters(trajectory.state, trajectory.input.time_step_size)
+
+            # Verify that subprocess is working
+            output = subprocess.check_output(['cmd', '/c', 'echo', 'hello'])
+            assert (output == 'hello\r\n')
+
             # Run the PDE solver
-            bash_command = self.input.exe_path+' '+self.run_input_file_name
-            subprocess.call('bash -c \''+bash_command+'\'')
+            bash_command = '"%s %s"' % (self.input.exe_path, self.run_input_file_name)
+
+            output = subprocess.check_output(
+                ['cmd', '/c', 'bash', '-c', bash_command])
+
         # Read the solution
         solution_file_name = \
             'solution-'+str(int(math.ceil(trajectory.input.time_step_size/self.input.time.step_size)))+'.vtk'

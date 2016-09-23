@@ -65,7 +65,7 @@ class PDESolverInputs:
 
 class PDEInputs:
     def __init__(self, body):
-        self.exe_path = '/mnt/c/Users/Alexander/UbuntuShared/dimice-heat-dealii/bin/heat_problem'
+        self.exe_path = '/mnt/c/Users/Alexander/UbuntuShared/dimice-pde-dealii/bin/heat_problem'
         self.working_dir = 'C:\\Users\\Alexander\\UbuntuShared\\run\\Trajectory\\'
         self.use_physical_diffusivity = True
         self.geometry = PDEGeometryInputs()
