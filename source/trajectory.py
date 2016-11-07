@@ -25,6 +25,8 @@ class Trajectory:
 
     def run_step(self):
         self.pde.input.time.end_time = self.input.time_step_size
+        self.pde.state.velocity[:] = -self.state.velocity
+        
         self.pde.solve(self)
 
         def increment_data():
@@ -101,6 +103,8 @@ class Trajectory:
         
         self.pde.state.set_position(self.pde.state.get_position() + position_update)
         
+        delta_v = position_update[1]*self.input.time_step_size
+        
         orientation_update = np.empty_like(self.state.orientation)
         orientation_update[0] = output.x[2]
         orientation_update[1] = 0.
@@ -112,6 +116,9 @@ class Trajectory:
         position[2] = 0.
         position = position + self.state.velocity*self.input.time_step_size
         self.state.set_position(position)
+        
+        
+        self.state.velocity[1] = self.state.velocity[1] + delta_v
         
         self.state.orientation = self.state.orientation + orientation_update
 
