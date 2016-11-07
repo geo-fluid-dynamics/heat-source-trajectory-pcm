@@ -8,7 +8,7 @@ class TrajectoryInputs:
         self.time_step_size = 0.02
         # @todo: Generalize the plot view window
         self.plot_xlim = [-.015, .015]
-        self.plot_ylim = [-.03, .015]
+        self.plot_ylim = [-.015, .015]
 
 
 class BodyInputs:
