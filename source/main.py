@@ -14,11 +14,13 @@ def run_superposed_advection():
 
     t = trajectory.Trajectory()
     
-    t.input.name = 'temp_superposed_advection'
+    t.input.name = 'superposed_advection'
     
-    t.input.step_count = 5
+    t.input.step_count = 2
     t.input.time_step_size = 1.
-    t.state.velocity = [0., 0.001]
+    
+    t.state.velocity[1] = -0.001
+    t.pde.state.velocity[:] = -t.state.velocity
     
     r = 1.e-2
     t.body.input.sphere_radius = r
@@ -46,6 +48,7 @@ def run_superposed_advection():
     t.pde.input.solver.tolerance = 1.e-8
     t.pde.input.solver.normalize_tolerance = False
 
+    print('View from fixed reference frame')
     t.run()
 
     print(t.time_history)

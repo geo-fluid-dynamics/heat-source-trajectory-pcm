@@ -5,16 +5,10 @@ import matplotlib.pyplot as plt
 import pandas
 
 import inputs
+import state as state_module
 import pde
 import body
 import plots
-
-
-class State:
-    def __init__(self):
-        self.position = np.array((0., 0., 0.))
-        self.orientation = np.array((0., 0., 0.))
-        self.velocity = np.array((0., 0., 0.))
 
 
 class Trajectory:
@@ -23,8 +17,8 @@ class Trajectory:
         self.body = body.Body()
         self.pde = pde.PDE(self.body)
         self.environment = inputs.EnvironmentInputs()
-        self.state = State()
-        self.old_state = State()
+        self.state = state_module.State()
+        self.old_state = state_module.State()
         self.step = 0
         self.time = 0.
         self.time_history = self.make_time_history_row()
@@ -41,21 +35,24 @@ class Trajectory:
             self.time_history = self.time_history.append(new_row)
 
         def objective(x):
-            state = State()
-            if not (type(x) == type(state)):
-                state = State()
-                state.position[:2] = x[:2]
-                state.orientation[0] = x[2]
             gravity_aligned_axis = 1
+            state = state_module.State()
+            position = np.empty_like(state.position)
+            position[:2] = x[:2]
+            position[2] = 0.
+            state.set_position(position)
+            state.orientation[0] = x[2]
             return self.body.get_center_of_gravity(state)[gravity_aligned_axis]
-
+                
         def constraints(x):
-            state = State()
-            if not (type(x) == type(state)):
-                state = State()
-                state.position[:2] = x[:2]
-                state.orientation[0] = x[2]
+            state = state_module.State()
+            position = np.empty_like(state.position)
+            position[:2] = x[:2]
+            position[2] = 0.
+            state.set_position(position)
+            state.orientation[0] = x[2]
             return self.pde.interpolator(self.body.get_hull_points(state))
+            
 
         # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
         # We must limit x away from the boundary of the domain.
@@ -65,12 +62,15 @@ class Trajectory:
         reference_length = self.body.input.reference_length
         bounds = (
             (0., 0.),
-            (self.state.position[1] - reference_length, self.state.position[1] + reference_length),
+            (self.pde.state.get_position()[1] - reference_length, self.pde.state.get_position()[1] + reference_length),
             (0., 0.))
 
         # Verify that the initial guess does not violate any constraints.
         epsilon = 1e-6
-        constraint_values = constraints(self.state)
+        x = np.array((0., 0., 0.))
+        x[:2] = self.pde.state.get_position()[:2]
+        x[2] = self.pde.state.orientation[0]
+        constraint_values = constraints(x)
         if any(constraint_values < -epsilon):
             increment_data()  # This allows us to animate the trajectory when the body isn't yet moving.
             return
@@ -79,18 +79,41 @@ class Trajectory:
         #
 
         x0 = np.array([0., 0., 0.])
-        x0[:2] = self.state.position[:2]
-        x0[2] = self.state.orientation[0]
+        x0[:2] = self.pde.state.get_position()[:2]
+        x0[2] = self.pde.state.orientation[0]
         output = minimize(fun=objective, x0=x0, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
         # Verify that the solution does not violate any constraints.
         # scipy.minimize likes to return "success" even though constraints are violated.
         constraint_values = constraints(output.x)
         assert(not any(constraint_values < -epsilon)) 
-        #
+        
         assert(not any(np.isnan(output.x)))
-        #
-        self.state.position[:2] = output.x[:2]
-        self.state.orientation[0] = output.x[2]
+        
+        print(output)
+        
+        position_update = np.empty_like(self.state.get_position())
+        position_update[:2] = output.x[:2] - x0[:2]
+        position_update[2] = 0.
+        
+        position = np.empty_like(self.state.position)
+        position[:2] = output.x[:2]
+        position[2] = 0.
+        self.pde.state.set_position(position)
+        
+        orientation_update = np.empty_like(self.state.orientation)
+        orientation_update[0] = output.x[2] - x0[2]
+        orientation_update[1] = 0.
+        orientation_update[2] = 0.
+        self.pde.state.orientation[0] = output.x[2]
+        
+        position = np.empty_like(self.state.position)
+        position[:2] = self.state.get_position()[:2] + position_update[:2]
+        position[2] = 0.
+        position = position - self.pde.state.velocity*self.input.time_step_size
+        self.state.set_position(position)
+        
+        self.state.orientation = self.state.orientation + orientation_update
+
         # @todo: Warn if solution is on boundary.
 
         #
@@ -99,9 +122,11 @@ class Trajectory:
     def make_time_history_row(self):
         return pandas.DataFrame(
             {'step': self.step, 'time': self.time,
-             'lateral': self.state.position[0],
-             'depth': self.state.position[1],
-             'rotation': self.state.orientation[0]},
+             'lateral': self.state.get_position()[0],
+             'depth': self.state.get_position()[1],
+             'rotation': self.state.orientation[0],
+             'pde_lateral': self.pde.state.get_position()[0],
+             'pde_depth': self.pde.state.get_position()[1]},
             index=[self.step])
 
     def run(self):
@@ -114,7 +139,8 @@ class Trajectory:
         print(self.time_history)
 
         while self.step < self.input.step_count:
-            self.old_state = self.state
+            self.old_state.set_position(self.state.get_position())
+            self.old_state.orientation[0] = self.state.orientation[0]
             self.run_step()
             self.plot_frame()
             self.pde.interpolate_old_field = True
@@ -126,6 +152,11 @@ class Trajectory:
     # @todo: plot frames with ParaView
 
     def plot_frame(self):    
+        if self.input.plot_fixed_reference_frame:
+            assert(self.pde.state.orientation[0] == 0.) # @todo: Also rotate the frame
+            self.pde.data[:, 0] = self.pde.data[:, 0] + self.state.get_position()[0] - self.pde.state.get_position()[0]
+            self.pde.data[:, 1] = self.pde.data[:, 1] + self.state.get_position()[1] - self.pde.state.get_position()[1]
+            
         xi_grid, yi_grid = plots.grid_sample_points(self.pde.data)
         ui = self.pde.interpolator(xi_grid, yi_grid)
         plt.xlabel('x')

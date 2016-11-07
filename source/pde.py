@@ -11,12 +11,13 @@ import shutil
 import scipy
 
 import inputs
-
-
+import state as state_module
+        
 class PDE:
 
     def __init__(self, body):
         self.input = inputs.PDEInputs(body)
+        self.state = state_module.State()
         self.body = body
         self.run_input_file_name = 'pde.prm'
         self.interpolate_old_field = False
@@ -25,7 +26,7 @@ class PDE:
 
     def solve(self, trajectory):
 
-        self.write_parameters(trajectory.state, trajectory.input.time_step_size)
+        self.write_parameters(trajectory.input.time_step_size)
 
         # Run the PDE solver
         subprocess.call([self.input.exe_path, self.run_input_file_name])
@@ -65,7 +66,7 @@ class PDE:
                 new_file = 'solution-'+str(solution_number)+'.vtk'
                 shutil.move(os.path.join('.', f), os.path.join(archive_dir, new_file))
 
-    def write_parameters(self, state, end_time):
+    def write_parameters(self, end_time):
 
         if self.interpolate_old_field:
             iv_function_name = 'interpolate_old_field'
@@ -75,12 +76,12 @@ class PDE:
         parameters = {
             'pde': {
                 'use_physical_diffusivity': self.input.use_physical_diffusivity,
-                'convection_velocity': state.velocity},
+                'convection_velocity': [self.state.velocity[0], self.state.velocity[1]]},
             'geometry': {
                 'dim': self.input.geometry.dim,
                 'grid_name': self.input.geometry.grid_name,
                 'sizes': self.input.geometry.sizes,
-                'transformations': [state.position[0], state.position[1], state.orientation[0]]},
+                'transformations': [self.state.get_position()[0], self.state.get_position()[1], self.state.orientation[0]]},
             'refinement': {
                 'boundaries_to_refine': self.input.refinement.boundaries_to_refine,
                 'initial_boundary_cycles': self.input.refinement.initial_boundary_cycles,

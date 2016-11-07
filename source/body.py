@@ -71,7 +71,8 @@ def move(old_points, state):
     theta = state.orientation[0]
     rotation_matrix = np.matrix([[math.cos(theta), math.sin(theta)], [-math.sin(theta), math.cos(theta)]])
     points = np.matrix(old_points)*rotation_matrix
-    points = points + state.position[:2]
+    points[:, 0] = points[:, 0]  + state.get_position()[0]
+    points[:, 1] = points[:, 1]  + state.get_position()[1]
     return np.array(points)
 
 

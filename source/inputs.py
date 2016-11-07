@@ -9,6 +9,7 @@ class TrajectoryInputs:
         # @todo: Generalize the plot view window
         self.plot_xlim = [-.015, .015]
         self.plot_ylim = [-.015, .015]
+        self.plot_fixed_reference_frame = True
 
 
 class BodyInputs:
