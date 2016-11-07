@@ -32,8 +32,11 @@ class PDE:
 
         # Read the solution
         solution_file_name = \
-            'solution-'+str(int(math.ceil(trajectory.input.time_step_size/self.input.time.step_size)))+'.vtk'
+            'solution-'+ \
+            str(int(math.ceil(trajectory.input.time_step_size/self.input.time.step_size)))+ \
+            '.vtk'
         reader = vtk.vtkUnstructuredGridReader()
+        print('Reading solution file '+solution_file_name)
         reader.SetFileName(solution_file_name)
         reader.Update()
         nodes = vtk_to_numpy(reader.GetOutput().GetPoints().GetData())
@@ -52,7 +55,7 @@ class PDE:
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
 
-        for file_name in ['solution_table.txt', self.run_input_file_name]:
+        for file_name in [self.run_input_file_name]:
             shutil.move(
                 os.path.join('.', file_name),
                 os.path.join(archive_dir, 'step'+str(trajectory.step)+'_'+file_name))
@@ -72,10 +75,14 @@ class PDE:
         else:
             iv_function_name = 'constant'
         
+        convection_velocity = [0., 0., 0.]
+        if self.input.enable_convection:
+            convection_velocity = state.velocity
+        
         parameters = {
             'pde': {
                 'use_physical_diffusivity': self.input.use_physical_diffusivity,
-                'convection_velocity': state.velocity},
+                'convection_velocity': convection_velocity},
             'geometry': {
                 'dim': self.input.geometry.dim,
                 'grid_name': self.input.geometry.grid_name,

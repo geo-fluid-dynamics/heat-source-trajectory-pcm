@@ -10,7 +10,13 @@ class Body:
         self.input = inputs.BodyInputs()
 
     def get_hull_points(self, state):
-        points = make_sphere_points(self.input.sphere_radius)
+        points = []
+        if self.input.geometry_name == 'sphere':
+            points = make_sphere_points(self.input.sizes[0])
+        elif self.input.geometry_name == 'sphere-cylinder':
+            points = make_sphere_cylinder_points(self.input.sizes[0], self.input.sizes[1])
+        else:
+            raise Exception('Invalid body.input.geometry_name = '+self.input.geometry_name)
         points = move(points, state)
         return points
 
@@ -33,7 +39,7 @@ def make_sphere_points(sphere_radius=1., point_count=33):
 
 
 def make_sphere_cylinder_points(sphere_radius=0.25, cylinder_length=1.0,
-                                arc_point_count=5, line_point_count=5):
+                                arc_point_count=11, line_point_count=5):
         # Construct spherical curve parametrically
         sample_angles = np.linspace(np.pi, 2*np.pi, arc_point_count)
         nose_x = sphere_radius*np.cos(sample_angles)

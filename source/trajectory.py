@@ -1,5 +1,6 @@
 from scipy.optimize import minimize
 import numpy as np
+import math
 import os
 import matplotlib.pyplot as plt
 import pandas
@@ -62,17 +63,18 @@ class Trajectory:
         # Since the domain will be relatively large compared to the body, and movements should be in small increments.
         # it should suffice to bound the movement relative to a reference length.
 
-        reference_length = self.body.input.reference_length
+        L = self.body.input.reference_length
         bounds = (
-            (0., 0.),
-            (self.state.position[1] - reference_length, self.state.position[1] + reference_length),
-            (0., 0.))
+            (self.state.position[0] - L, self.state.position[0] + L),
+            (self.state.position[1] - L, self.state.position[1] + L),
+            (-math.pi/16., math.pi/16))
 
         # Verify that the initial guess does not violate any constraints.
         epsilon = 1e-6
         constraint_values = constraints(self.state)
         if any(constraint_values < -epsilon):
             increment_data()  # This allows us to animate the trajectory when the body isn't yet moving.
+            print('Not moving yet.')
             return
 
         assert(not any(constraint_values < -epsilon))
@@ -89,11 +91,11 @@ class Trajectory:
         #
         assert(not any(np.isnan(output.x)))
         #
+        
         self.state.position[:2] = output.x[:2]
         self.state.orientation[0] = output.x[2]
         # @todo: Warn if solution is on boundary.
-
-        #
+        
         increment_data()
 
     def make_time_history_row(self):
@@ -114,7 +116,8 @@ class Trajectory:
         print(self.time_history)
 
         while self.step < self.input.step_count:
-            self.old_state = self.state
+            self.old_state.position[:] = self.state.position[:]
+            self.old_state.orientation[:] = self.state.orientation[:]
             self.run_step()
             self.plot_frame()
             self.pde.interpolate_old_field = True
@@ -125,7 +128,7 @@ class Trajectory:
 
     # @todo: plot frames with ParaView
 
-    def plot_frame(self):    
+    def plot_frame(self):
         xi_grid, yi_grid = plots.grid_sample_points(self.pde.data)
         ui = self.pde.interpolator(xi_grid, yi_grid)
         plt.xlabel('x')
