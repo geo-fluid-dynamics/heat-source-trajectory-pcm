@@ -144,19 +144,10 @@ class Trajectory:
             self.old_state.orientation[0] = self.state.orientation[0]
             self.run_step()
             file_path = self.input.name+'/trajectory_step'+str(self.step)
-            self.plot_frame(file_path+'_MovingViewFrame')
 
-            print('pde.data[:, 1] = ', self.pde.data[:, 1])
-            if self.input.plot_fixed_reference_frame:
-                print('Plotting from view of fixed reference frame')
-                assert(self.pde.state.orientation[0] == 0.) # @todo: Also rotate the frame
-                delta_x = self.state.get_position()[0] - self.pde.state.get_position()[0]
-                self.pde.data[:, 0] = self.pde.data[:, 0] + delta_x
-                delta_y = self.state.get_position()[1] - self.pde.state.get_position()[1]
-                print('delta_y = ', delta_y)
-                self.pde.data[:, 1] = self.pde.data[:, 1] + delta_y
-                print('pde.data[:, 1] = ', self.pde.data[:, 1])
-                self.plot_frame(file_path+'_FixedViewFrame')
+            assert(self.pde.state.orientation[0] == 0.) # @todo: Also rotate the frame
+            
+            self.plot_frame(file_path+'_FixedViewFrame')
                 
             self.pde.interpolate_old_field = True
 
@@ -167,8 +158,8 @@ class Trajectory:
 
     def plot_frame(self, file_path):           
         xi_grid, yi_grid = plots.grid_sample_points(self.pde.data)
-        print('yi_grid = ', yi_grid)
-        ui = self.pde.interpolator(xi_grid, yi_grid)
+        delta_y = self.state.get_position()[1] - self.pde.state.get_position()[1]
+        ui = self.pde.interpolator(xi_grid, yi_grid - delta_y)
         plt.xlabel('x')
         plt.ylabel('y')
         if self.input.plot_xlim:
