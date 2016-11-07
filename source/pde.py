@@ -52,7 +52,7 @@ class PDE:
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
 
-        for file_name in ['solution_table.txt', self.run_input_file_name]:
+        for file_name in [self.run_input_file_name]:
             shutil.move(
                 os.path.join('.', file_name),
                 os.path.join(archive_dir, 'step'+str(trajectory.step)+'_'+file_name))

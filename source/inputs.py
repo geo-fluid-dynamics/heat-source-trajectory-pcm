@@ -13,9 +13,9 @@ class TrajectoryInputs:
 
 class BodyInputs:
     def __init__(self):
-        self.geometry_name = 'hyper_shell'
-        self.sphere_radius = 1.
-        self.reference_length = self.sphere_radius
+        self.geometry_name = 'sphere'
+        self.sizes = [1.]
+        self.reference_length = self.sizes[0]
 
 
 class EnvironmentInputs:
@@ -26,6 +26,7 @@ class EnvironmentInputs:
 
 class PDEGeometryInputs:
     def __init__(self):
+        self.dim = 2
         self.grid_name = 'hyper_shell'
         self.sizes = [0.5, 1.]
         self.transformations = [0., 0., 0.]
@@ -67,11 +68,11 @@ class PDEInputs:
     def __init__(self, body):
         self.exe_path = '/home/zimmerman/dimice-pde-dealii/build/heat_problem'
         self.use_physical_diffusivity = True
+        self.enable_convection = True
         self.geometry = PDEGeometryInputs()
         self.refinement = PDERefinementInputs()
         self.bc = PDEBoundaryConditionsInputs()
         self.iv = PDEInitialValuesInputs()
         self.time = PDETimeInputs()
         self.solver = PDESolverInputs()
-        r = body.input.sphere_radius
-        self.geometry.sizes = [r, 2 * r]
+        self.geometry.sizes = [body.input.sizes[0], 2 * body.input.sizes[0]]

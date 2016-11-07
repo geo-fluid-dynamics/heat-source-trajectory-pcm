@@ -14,10 +14,10 @@ def run_superposed_advection():
 
     t = trajectory.Trajectory()
     
-    t.input.name = 'superposed_advection'
+    t.input.name = 'temp_superposed_advection'
     
     t.input.step_count = 5
-    t.input.time_step_size = 10.
+    t.input.time_step_size = 5.
     t.state.velocity = [0., 0.001]
     
     r = 1.e-2
