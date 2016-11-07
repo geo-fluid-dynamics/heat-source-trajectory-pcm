@@ -62,7 +62,7 @@ class PDE:
             if f.endswith('.vtk'):
                 pde_step_count = round(trajectory.input.time_step_size/self.input.time.step_size)
                 old_solution_number = int((f.replace('.vtk', '')).replace('solution-', ''))
-                solution_number = int(pde_step_count*trajectory.step + old_solution_number)
+                solution_number = int(pde_step_count*trajectory.step + old_solution_number + trajectory.step)
                 new_file = 'solution-'+str(solution_number)+'.vtk'
                 shutil.move(os.path.join('.', f), os.path.join(archive_dir, new_file))
 

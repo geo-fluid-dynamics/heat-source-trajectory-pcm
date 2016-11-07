@@ -43,7 +43,7 @@ def run_superposed_advection():
     t.pde.input.refinement.initial_global_cycles = 2
     
     t.pde.input.time.semi_implicit_theta = 1.
-    t.pde.input.time.step_size = 1.
+    t.pde.input.time.step_size = 0.2
 
     t.pde.input.solver.tolerance = 1.e-8
     t.pde.input.solver.normalize_tolerance = False
