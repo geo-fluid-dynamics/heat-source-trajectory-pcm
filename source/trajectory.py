@@ -118,6 +118,11 @@ class Trajectory:
         self.state.set_position(position)
         
         
+        self.input.plot_xlim[0] = self.input.plot_ylim[0] + self.state.velocity[0]*self.input.time_step_size
+        self.input.plot_xlim[1] = self.input.plot_ylim[1] + self.state.velocity[0]*self.input.time_step_size
+        self.input.plot_ylim[0] = self.input.plot_ylim[0] + self.state.velocity[1]*self.input.time_step_size
+        self.input.plot_ylim[1] = self.input.plot_ylim[1] + self.state.velocity[1]*self.input.time_step_size
+        
         self.state.velocity[1] = self.state.velocity[1] + delta_v
         
         self.state.orientation = self.state.orientation + orientation_update
@@ -130,11 +135,10 @@ class Trajectory:
     def make_time_history_row(self):
         return pandas.DataFrame(
             {'step': self.step, 'time': self.time,
-             'lateral': self.state.get_position()[0],
+             'velocity': self.state.velocity[1],
              'depth': self.state.get_position()[1],
-             'rotation': self.state.orientation[0],
-             'pde_lateral': self.pde.state.get_position()[0],
-             'pde_depth': self.pde.state.get_position()[1]},
+             'pde_depth': self.pde.state.get_position()[1],
+             'heat_flux': self.pde.input.bc.function_double_arguments[0]},
             index=[self.step])
 
     def run(self):
