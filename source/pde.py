@@ -18,6 +18,7 @@ class PDE:
     def __init__(self, body):
         self.input = inputs.PDEInputs(body)
         self.state = state_module.State()
+        self.state_dot = state_module.State()
         self.body = body
         self.run_input_file_name = 'pde.prm'
         self.interpolate_old_field = False
@@ -76,12 +77,12 @@ class PDE:
         parameters = {
             'pde': {
                 'use_physical_diffusivity': self.input.use_physical_diffusivity,
-                'convection_velocity': [self.state.velocity[0], self.state.velocity[1]]},
+                'convection_velocity': [self.state_dot.get_position()[0], self.state_dot.get_position()[1]]},
             'geometry': {
                 'dim': self.input.geometry.dim,
                 'grid_name': self.input.geometry.grid_name,
                 'sizes': self.input.geometry.sizes,
-                'transformations': [self.state.get_position()[0], self.state.get_position()[1], self.state.orientation[0]]},
+                'transformations': [self.state.get_position()[0], self.state.get_position()[1], self.state.get_orientation()[0]]},
             'refinement': {
                 'boundaries_to_refine': self.input.refinement.boundaries_to_refine,
                 'initial_boundary_cycles': self.input.refinement.initial_boundary_cycles,

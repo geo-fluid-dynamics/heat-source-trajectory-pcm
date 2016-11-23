@@ -13,12 +13,10 @@ def run():
 def run_stepped_heat():
     t = trajectory.Trajectory()
     
-    t.input.name = 'step_heat_4'
+    t.input.name = 'step_heat_5'
     
     t.input.step_count = 10
     t.input.time_step_size = 1.
-    
-    t.state.velocity[1] = -0.001
     
     r = 1.e-2
     t.body.input.sphere_radius = r

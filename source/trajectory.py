@@ -3,6 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import pandas
+import copy
 
 import inputs
 import state as state_module
@@ -12,23 +13,39 @@ import plots
 
 
 class Trajectory:
+    
     def __init__(self):
         self.input = inputs.TrajectoryInputs()
         self.body = body.Body()
         self.pde = pde.PDE(self.body)
         self.environment = inputs.EnvironmentInputs()
+        
         self.state = state_module.State()
+        self.state_dot = state_module.State()
+        
         self.old_state = state_module.State()
+        
         self.step = 0
         self.time = 0.
         self.time_history = self.make_time_history_row()
 
-    def run_step(self):
-        self.pde.input.time.end_time = self.input.time_step_size
-        self.pde.state.velocity[:] = -self.state.velocity
         
-        self.pde.solve(self)
-
+    def make_time_history_row(self):
+        return pandas.DataFrame(
+            {'step': self.step, 'time': self.time,
+             'velocity': self.state_dot.get_position()[1],
+             'depth': self.state.get_position()[1],
+             'pde_depth': self.pde.state.get_position()[1],
+             'heat_flux': self.pde.input.bc.function_double_arguments[0]},
+            index=[self.step])
+        
+        
+    def run_step(self):
+        self.pde.state_dot = -1*self.state_dot
+        self.pde.input.time.end_time = self.input.time_step_size
+        
+        self.pde.solve(self) # @todo: Why does PDE need a Trajectory input?
+        
         def increment_data():
             self.time += self.input.time_step_size
             self.step += 1
@@ -36,32 +53,67 @@ class Trajectory:
             print(new_row)
             self.time_history = self.time_history.append(new_row)
 
-        def x_to_new_state(x):
+            
+        def x_to_state(x):
             state = state_module.State()
-            state.set_position(self.pde.state.get_position())
-            state.orientation[0] = self.pde.state.orientation[0]
-            
             position = state.get_position()
-            position[0] = position[0] + x[0]
-            position[1] = position[1] + x[1]
+            orientation = state.get_orientation()
             
+            if x.size == 3:
+                position[:2] = x[:2]
+                position[2] = 0
+                orientation[0] = x[2]
+                orientation[1] = 0
+                orientation[2] = 0
+                
+            elif x.size == 6:
+                position = x[:3]
+                orientation = x[3:]
+                
             state.set_position(position)
-            
-            state.orientation[0] = x[2]
-            
+            state.set_orientation(orientation)
             return state
+            
+            
+        def state_to_x(state, ndof):
+            position = state.get_position()
+            orientation = state.get_orientation()
+            
+            if ndof == 3:
+                x = np.array([0., 0., 0.])
+                x[:2] = position[:2]
+                x[2] = orientation[0]
+                return x
+                
+            elif ndof == 6:
+                x = np.array([0., 0., 0., 0., 0., 0.])
+                x[:3] = position[:]
+                x[3:] = orientation[:]
+                return x
         
             
         def objective(x):
-            gravity_aligned_axis = 1
-            state = x_to_new_state(x)
+            gravity_aligned_axis = 1 # @todo: Generalize the gravity vector
+            state = x_to_state(x)
             return self.body.get_center_of_gravity(state)[gravity_aligned_axis]
-                
+           
+           
         def constraints(x):
-            state = x_to_new_state(x)
+            state = x_to_state(x)
             return self.pde.interpolator(self.body.get_hull_points(state))
-            
 
+            
+        x0 = state_to_x(self.pde.state, 3)
+        
+        # Verify that the initial guess does not violate any constraints.
+        epsilon = 1e-6
+        constraint_values = constraints(x0)
+        if any(constraint_values < -epsilon):
+            increment_data()  # This allows us to animate the trajectory when the body isn't yet moving.
+            return
+
+        assert(not any(constraint_values < -epsilon))
+        
         # Because we're numerically approximating the derivative, SLSQP breaks at the outer boundary.
         # We must limit x away from the boundary of the domain.
         # Since the domain will be relatively large compared to the body, and movements should be in small increments.
@@ -69,77 +121,35 @@ class Trajectory:
 
         reference_length = self.body.input.reference_length
         bounds = (
-            (0., 0.),
-            (-reference_length, reference_length),
-            (0., 0.))
-
-        # Verify that the initial guess does not violate any constraints.
-        epsilon = 1e-6
-        x = np.array((0., 0., 0.))
-        constraint_values = constraints(x)
-        if any(constraint_values < -epsilon):
-            increment_data()  # This allows us to animate the trajectory when the body isn't yet moving.
-            return
-
-        assert(not any(constraint_values < -epsilon))
-        #
-
-        x0 = np.array([0., 0., 0.])
-        x0[:2] = self.pde.state.get_position()[:2]
-        x0[2] = self.pde.state.orientation[0]
+            (0., 0.), # @todo: Enable lateral motion
+            (x0[1] - reference_length, x0[1] + reference_length),
+            (0., 0.)) # @todo: Enable rotation
+        
         output = minimize(fun=objective, x0=x0, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
+        
+        print(output)
+        assert(not any(np.isnan(output.x)))
+        
         # Verify that the solution does not violate any constraints.
         # scipy.minimize likes to return "success" even though constraints are violated.
         constraint_values = constraints(output.x)
         assert(not any(constraint_values < -epsilon)) 
-        
-        assert(not any(np.isnan(output.x)))
-        
-        print(output)
-        
-        position_update = np.empty_like(self.state.get_position())
-        position_update[:2] = output.x[:2]
-        position_update[2] = 0.
-        
-        self.pde.state.set_position(self.pde.state.get_position() + position_update)
-        
-        delta_v = position_update[1]*self.input.time_step_size
-        
-        orientation_update = np.empty_like(self.state.orientation)
-        orientation_update[0] = output.x[2]
-        orientation_update[1] = 0.
-        orientation_update[2] = 0.
-        self.pde.state.orientation[0] = self.pde.state.orientation[0] + orientation_update[0]
-        
-        position = np.empty_like(self.state.position)
-        position[:2] = self.state.get_position()[:2] + position_update[:2]
-        position[2] = 0.
-        position = position + self.state.velocity*self.input.time_step_size
-        self.state.set_position(position)
-        
-        
-        self.input.plot_xlim[0] = self.input.plot_ylim[0] + self.state.velocity[0]*self.input.time_step_size
-        self.input.plot_xlim[1] = self.input.plot_ylim[1] + self.state.velocity[0]*self.input.time_step_size
-        self.input.plot_ylim[0] = self.input.plot_ylim[0] + self.state.velocity[1]*self.input.time_step_size
-        self.input.plot_ylim[1] = self.input.plot_ylim[1] + self.state.velocity[1]*self.input.time_step_size
-        
-        self.state.velocity[1] = self.state.velocity[1] + delta_v
-        
-        self.state.orientation = self.state.orientation + orientation_update
 
-        # @todo: Warn if solution is on boundary.
+        plot_delta_x =  self.state_dot.get_position()[0]*self.input.time_step_size
+        self.input.plot_xlim[0] = self.input.plot_xlim[0] + plot_delta_x
+        self.input.plot_xlim[1] = self.input.plot_xlim[1] + plot_delta_x
+        plot_delta_y = self.state_dot.get_position()[1]*self.input.time_step_size
+        self.input.plot_ylim[0] = self.input.plot_ylim[0] + plot_delta_y
+        self.input.plot_ylim[1] = self.input.plot_ylim[1] + plot_delta_y
+        
+        delta_state = x_to_state(output.x) - self.pde.state
+        self.state = self.state + delta_state + self.input.time_step_size*self.state_dot
+        self.state_dot = self.state_dot + self.input.time_step_size*delta_state
+        
+        self.pde.state = self.pde.state + delta_state
 
-        #
         increment_data()
-
-    def make_time_history_row(self):
-        return pandas.DataFrame(
-            {'step': self.step, 'time': self.time,
-             'velocity': self.state.velocity[1],
-             'depth': self.state.get_position()[1],
-             'pde_depth': self.pde.state.get_position()[1],
-             'heat_flux': self.pde.input.bc.function_double_arguments[0]},
-            index=[self.step])
+        
 
     def run(self):
 
@@ -151,8 +161,7 @@ class Trajectory:
         print(self.time_history)
 
         while self.step < self.input.step_count:
-            self.old_state.set_position(self.state.get_position())
-            self.old_state.orientation[0] = self.state.orientation[0]
+            self.old_state = copy.deepcopy(self.state)
             self.run_step()
             file_path = self.input.name+'/trajectory_step'+str(self.step)
 
