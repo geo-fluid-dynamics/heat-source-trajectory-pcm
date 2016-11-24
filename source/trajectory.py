@@ -27,20 +27,14 @@ class Trajectory:
         
         self.step = 0
         self.time = 0.
-        self.time_history = self.make_time_history_row()
 
         
-    def make_time_history_row(self):
-        return pandas.DataFrame(
-            {'step': self.step, 'time': self.time,
-             'velocity': self.state_dot.get_position()[1],
-             'depth': self.state.get_position()[1],
-             'pde_depth': self.pde.state.get_position()[1],
-             'heat_flux': self.pde.input.bc.function_double_arguments[0]},
-            index=[self.step])
-        
-        
     def run_step(self):
+        if not os.path.exists(self.input.name):
+            os.makedirs(self.input.name)
+        
+        self.old_state = copy.deepcopy(self.state)
+    
         self.pde.state_dot = -1*self.state_dot
         self.pde.input.time.end_time = self.input.time_step_size
         
@@ -49,9 +43,6 @@ class Trajectory:
         def increment_data():
             self.time += self.input.time_step_size
             self.step += 1
-            new_row = self.make_time_history_row()
-            print(new_row)
-            self.time_history = self.time_history.append(new_row)
 
             
         def x_to_state(x):
@@ -147,33 +138,22 @@ class Trajectory:
         self.pde.state = new_pde_state
         
         self.state = self.state + delta_state + self.input.time_step_size*self.state_dot
-        self.state_dot = self.state_dot + delta_state/self.input.time_step_size
+        self.state_dot = self.state_dot + (1./self.input.time_step_size)*delta_state
 
         increment_data()
         
-
-    def run(self):
-
-        print("Running trajectory \'"+self.input.name+'\'')
-
-        if not os.path.exists(self.input.name):
-            os.makedirs(self.input.name)
-
-        print(self.time_history)
-
-        while self.step < self.input.step_count:
-            self.old_state = copy.deepcopy(self.state)
-            self.run_step()
-            file_path = self.input.name+'/trajectory_step'+str(self.step)
-
-            assert(self.pde.state.orientation[0] == 0.) # @todo: Also rotate the frame
+        assert(self.pde.state.orientation[0] == 0.) # @todo: Also rotate the frame
             
-            self.plot_frame(file_path+'_FixedViewFrame')
-                
-            self.pde.interpolate_old_field = True
+        file_path = self.input.name+'/trajectory_step'+str(self.step)
+        self.plot_frame(file_path)
+            
+        self.pde.interpolate_old_field = True
+        
 
-    def write_time_history(self):
-        self.time_history.to_csv(self.input.name+'_time_history.csv')
+    def run_steps(self, step_count):
+        for step in range(0, step_count):            
+            self.run_step()
+
 
     # @todo: plot frames with ParaView
 
@@ -202,19 +182,7 @@ class Trajectory:
         plt.savefig(file_path)
         plt.cla()
 
-    def plot_time_history(self):
-        fig = plt.figure()
-        plt.xlabel('Time [time units]')
-        plt.ylabel('Depth [distance units]')
-        plt.grid()
-        axes = fig.add_subplot(111)
-        axes.plot(self.time_history[:, 0], self.time_history[:, 2], label=self.input.name)
-        axes.autoscale_view(True, True, True)
-
-    def test(self):
-        self.run()
-
 
 if __name__ == "__main__":
-    trajectory = Trajectory()
-    trajectory.test()
+    traj= Trajectory()
+    traj.run_steps(2)

@@ -2,30 +2,27 @@
 import trajectory
 import pandas
 
-def make_time_history_row(trajectory):
-        return pandas.DataFrame(
-            {'step': trajectory.step, 
-             'time': trajectory.time,
-             'velocity': trajectory.state.velocity[1],
-             'depth': trajectory.state.get_position()[1],
-             'pde_depth': trajectory.pde.state.get_position()[1],
-             'heat_flux': trajectory.pde.input.bc.function_double_arguments[0]},
-            index=[trajectory.step])
-
-            
-def write_time_history(self):
-        self.time_history.to_csv(self.input.name+'/time_history.csv')
+def make_time_history_row(traj):
+    return pandas.DataFrame(
+        {'step': traj.step, 'time': traj.time,
+         'velocity': traj.state_dot.get_position()[1],
+         'depth': traj.state.get_position()[1],
+         'pde_depth': traj.pde.state.get_position()[1],
+         'heat_flux': traj.pde.input.bc.function_double_arguments[0]},
+        index=[traj.step])
         
         
 t = trajectory.Trajectory()
-    
-t.input.name = 'step_heat'
+time_history = make_time_history_row(t)
 
-t.input.step_count = 10
+t.input.name = 'constant_heat'
+
 t.input.time_step_size = 1.
 
+t.state_dot.position[1] = -0.001
+
 r = 1.e-2
-t.body.input.sphere_radius = r
+t.body.input.sizes = [r]
 
 t.pde.input.geometry.dim = 2
 t.pde.input.geometry.grid_name = 'hyper_shell'
@@ -50,11 +47,14 @@ t.pde.input.time.step_size = 0.2
 t.pde.input.solver.tolerance = 1.e-8
 t.pde.input.solver.normalize_tolerance = False
 
-t.run()
+time_history =  make_time_history_row(t)
+print(time_history)
 
-t.input.step_count = 20
-t.pde.input.bc.function_double_arguments[0] = 1.2*t.pde.input.bc.function_double_arguments[0]
-t.run()
+print("Running trajectory \'"+t.input.name+'\'')
 
-print(t.time_history)
-t.write_time_history()
+for step in range(0,3):
+    t.run_step()
+    time_history = time_history.append(make_time_history_row(t))
+    print(time_history)
+
+time_history.to_csv(t.input.name+'/time_history.csv')

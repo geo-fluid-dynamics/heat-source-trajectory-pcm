@@ -4,7 +4,6 @@
 class TrajectoryInputs:
     def __init__(self):
         self.name = 'default'
-        self.step_count = 5
         self.time_step_size = 0.02
         # @todo: Generalize the plot view window
         self.plot_xlim = [-.015, .015]

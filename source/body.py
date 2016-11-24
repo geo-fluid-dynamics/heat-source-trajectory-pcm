@@ -10,7 +10,7 @@ class Body:
         self.input = inputs.BodyInputs()
 
     def get_hull_points(self, state):
-        points = make_sphere_points(self.input.sphere_radius)
+        points = make_sphere_points(self.input.sizes[0])
         points = move(points, state)
         return points
 
