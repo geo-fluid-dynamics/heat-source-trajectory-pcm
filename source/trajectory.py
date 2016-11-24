@@ -142,11 +142,12 @@ class Trajectory:
         self.input.plot_ylim[0] = self.input.plot_ylim[0] + plot_delta_y
         self.input.plot_ylim[1] = self.input.plot_ylim[1] + plot_delta_y
         
-        delta_state = x_to_state(output.x) - self.pde.state
-        self.state = self.state + delta_state + self.input.time_step_size*self.state_dot
-        self.state_dot = self.state_dot + self.input.time_step_size*delta_state
+        new_pde_state = x_to_state(output.x) 
+        delta_state = new_pde_state - self.pde.state
+        self.pde.state = new_pde_state
         
-        self.pde.state = self.pde.state + delta_state
+        self.state = self.state + delta_state + self.input.time_step_size*self.state_dot
+        self.state_dot = self.state_dot + delta_state/self.input.time_step_size
 
         increment_data()
         
