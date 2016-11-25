@@ -1,6 +1,7 @@
 from scipy.optimize import minimize
 import numpy as np
 import os
+import math
 import matplotlib.pyplot as plt
 import pandas
 import copy
@@ -16,7 +17,7 @@ class Trajectory:
     
     def __init__(self):
         self.name = 'default'
-        self.time_step_size = 0.02
+        self.time_step_size = 1.
         
         self.body = body.Body()
         self.pde = pde.PDE(self.body)
@@ -29,9 +30,12 @@ class Trajectory:
         
         self.step = 0
         self.time = 0.
+        
+        self.max_change = [1., 1., math.pi/8.]
 
         
-    def run_step(self):
+    def run_step(self, display_convergence=False):
+ 
         if not os.path.exists(self.name):
             os.makedirs(self.name)
         
@@ -46,6 +50,8 @@ class Trajectory:
         def increment_data():
             self.time += self.time_step_size
             self.step += 1
+            file_path = self.name+'/trajectory_step'+str(self.step)
+            plot.plot_frame(self, file_path)
 
             
         def x_to_state(x):
@@ -102,6 +108,7 @@ class Trajectory:
         constraint_values = constraints(x0)
         if any(constraint_values < -epsilon):
             increment_data()  # This allows us to animate the trajectory when the body isn't yet moving.
+            print('The initial state violates the constraints. Skipping minimization')
             return
 
         assert(not any(constraint_values < -epsilon))
@@ -113,11 +120,13 @@ class Trajectory:
 
         reference_length = self.body.reference_length
         bounds = (
-            (0., 0.), # @todo: Enable lateral motion
-            (x0[1] - reference_length, x0[1] + reference_length),
-            (0., 0.)) # @todo: Enable rotation
+            (x0[0] - self.max_change[0], x0[0] + self.max_change[0]),
+            (x0[1] - self.max_change[1], x0[1] + self.max_change[1]),
+            (x0[2] - self.max_change[2], x0[2] + self.max_change[2]))
         
-        output = minimize(fun=objective, x0=x0, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds)
+        print('Minimizing objective')
+        
+        output = minimize(fun=objective, x0=x0, constraints={'type': 'ineq', 'fun': constraints}, bounds=bounds, options={'disp': display_convergence})
         
         print(output)
         assert(not any(np.isnan(output.x)))
@@ -135,11 +144,6 @@ class Trajectory:
         self.state_dot = self.state_dot + (1./self.time_step_size)*delta_state
 
         increment_data()
-        
-        assert(self.pde.state.orientation[0] == 0.) # @todo: Also rotate the frame
-        
-        file_path = self.name+'/trajectory_step'+str(self.step)
-        plot.plot_frame(self, file_path)
             
         self.pde.interpolate_old_field = True
         

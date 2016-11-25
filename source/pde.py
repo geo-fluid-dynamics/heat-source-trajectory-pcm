@@ -67,7 +67,7 @@ class PDE:
         self.solver = Solver()
         
         self.exe_path = '/home/zimmerman/dimice-pde-dealii/build/heat_problem'
-        self.use_physical_diffusivity = True
+        self.use_physical_diffusivity = False
         self.enable_convection = True
         
         self.state = state.State()

@@ -19,9 +19,10 @@ def plot_frame(traj, file_path):
     
     x_length = abs(max(x) - min(x))
     y_length = abs(max(y) - min(y))
-    xlim = [min(x) - x_length, max(x) + x_length]
+    length = max((x_length, y_length))
+    xlim = [min(x) - length, max(x) + length]
     plt.xlim(xlim)
-    ylim = [min(y) - y_length, max(y) + y_length]
+    ylim = [min(y) - length, max(y) + length]
     plt.ylim(ylim)
 
     ni = 1000

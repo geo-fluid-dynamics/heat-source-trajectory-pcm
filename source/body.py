@@ -9,7 +9,14 @@ class Body:
         self.reference_length = self.sizes[0]
 
     def get_hull_points(self, state):
-        points = make_sphere_points(self.sizes[0])
+        
+        if self.geometry_name == 'sphere':
+            points = make_sphere_points(self.sizes[0])
+        elif self.geometry_name == 'sphere-cylinder':
+            points = make_sphere_cylinder_points(self.sizes[0], self.sizes[1])
+        else:
+            assert(False)
+            
         points = move(points, state)
         return points
 

@@ -21,6 +21,8 @@ t.time_step_size = 1.
 r = 1.e-2
 t.body.sizes[0] = r
 
+t.max_change = [0., r/2., 0.]
+
 t.pde.geometry.dim = 2
 t.pde.geometry.grid_name = 'hyper_shell'
 t.pde.geometry.sizes = [r, 2*r]
