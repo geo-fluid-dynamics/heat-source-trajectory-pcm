@@ -1,16 +1,15 @@
 import numpy as np
 import math
 
-import inputs
-
-
 class Body:
 
     def __init__(self):
-        self.input = inputs.BodyInputs()
+        self.geometry_name = 'sphere'
+        self.sizes = [1.]
+        self.reference_length = self.sizes[0]
 
     def get_hull_points(self, state):
-        points = make_sphere_points(self.input.sizes[0])
+        points = make_sphere_points(self.sizes[0])
         points = move(points, state)
         return points
 

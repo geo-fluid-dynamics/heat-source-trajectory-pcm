@@ -8,33 +8,86 @@ import os
 import os.path
 import subprocess
 import shutil
-import scipy
+from scipy import interpolate
 
-import inputs
-import state as state_module
+import state  
+
+class Geometry:
+
+    def __init__(self):
+        self.dim = 2
+        self.grid_name = 'hyper_shell'
+        self.sizes = [0.5, 1.]
+        self.transformations = [0., 0., 0.]
+        
+        
+class Refinement:
+
+    def __init__(self):
+        self.boundaries_to_refine = 0
+        self.initial_boundary_cycles = 4
+        self.initial_global_cycles = 2
+        
+        
+class BoundaryConditions:
+
+    def __init__(self):
+        self.implementation_types = ['natural', 'strong']
+        self.function_names = ['constant', 'constant']
+        self.function_double_arguments = [1., -1.]
+        
+
+class InitialValues:
+
+    def __init__(self):
+        self.function_name = 'constant'
+        self.function_double_arguments = [-1.]
+        
+        
+class Time:
+    def __init__(self):
+        self.semi_implicit_theta = 0.7
+        self.step_size = 0.001
+
+
+class Solver:
+    def __init__(self):
+        self.tolerance = 1.e-8
+        self.normalize_tolerance = True
+
         
 class PDE:
 
-    def __init__(self, body):
-        self.input = inputs.PDEInputs(body)
-        self.state = state_module.State()
-        self.state_dot = state_module.State()
-        self.body = body
+    def __init__(self, geometry):
+        self.geometry = Geometry()
+        self.refinement = Refinement()
+        self.bc = BoundaryConditions()
+        self.iv = InitialValues()
+        self.time = Time()
+        self.solver = Solver()
+        
+        self.exe_path = '/home/zimmerman/dimice-pde-dealii/build/heat_problem'
+        self.use_physical_diffusivity = True
+        self.enable_convection = True
+        
+        self.state = state.State()
+        self.state_dot = state.State()
         self.run_input_file_name = 'pde.prm'
         self.interpolate_old_field = False
         self.data = []
         self.interpolator = []
-
+        
+        
     def solve(self, trajectory):
 
-        self.write_parameters(trajectory.input.time_step_size)
+        self.write_parameters(trajectory.time_step_size)
 
         # Run the PDE solver
-        subprocess.call([self.input.exe_path, self.run_input_file_name])
+        subprocess.call([self.exe_path, self.run_input_file_name])
 
         # Read the solution
         solution_file_name = \
-            'solution-'+str(int(math.ceil(trajectory.input.time_step_size/self.input.time.step_size)))+'.vtk'
+            'solution-'+str(int(math.ceil(trajectory.time_step_size/self.time.step_size)))+'.vtk'
         reader = vtk.vtkUnstructuredGridReader()
         reader.SetFileName(solution_file_name)
         reader.Update()
@@ -46,11 +99,11 @@ class PDE:
         table = table.drop_duplicates()
         self.data = table.as_matrix()
         #
-        self.interpolator = scipy.interpolate.LinearNDInterpolator(
+        self.interpolator = interpolate.LinearNDInterpolator(
             data[:, :2], data[:, 2], fill_value=trajectory.environment.temperature)
 
         # Move some PDE solver outputs to archive directory
-        archive_dir = trajectory.input.name+'/'
+        archive_dir = trajectory.name+'/'
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
 
@@ -61,7 +114,7 @@ class PDE:
 
         for f in os.listdir('.'):
             if f.endswith('.vtk'):
-                pde_step_count = round(trajectory.input.time_step_size/self.input.time.step_size)
+                pde_step_count = round(trajectory.time_step_size/self.time.step_size)
                 old_solution_number = int((f.replace('.vtk', '')).replace('solution-', ''))
                 solution_number = int(pde_step_count*trajectory.step + old_solution_number + trajectory.step)
                 new_file = 'solution-'+str(solution_number)+'.vtk'
@@ -76,31 +129,31 @@ class PDE:
         
         parameters = {
             'pde': {
-                'use_physical_diffusivity': self.input.use_physical_diffusivity,
+                'use_physical_diffusivity': self.use_physical_diffusivity,
                 'convection_velocity': [self.state_dot.get_position()[0], self.state_dot.get_position()[1]]},
             'geometry': {
-                'dim': self.input.geometry.dim,
-                'grid_name': self.input.geometry.grid_name,
-                'sizes': self.input.geometry.sizes,
+                'dim': self.geometry.dim,
+                'grid_name': self.geometry.grid_name,
+                'sizes': self.geometry.sizes,
                 'transformations': [self.state.get_position()[0], self.state.get_position()[1], self.state.get_orientation()[0]]},
             'refinement': {
-                'boundaries_to_refine': self.input.refinement.boundaries_to_refine,
-                'initial_boundary_cycles': self.input.refinement.initial_boundary_cycles,
-                'initial_global_cycles': self.input.refinement.initial_global_cycles},
+                'boundaries_to_refine': self.refinement.boundaries_to_refine,
+                'initial_boundary_cycles': self.refinement.initial_boundary_cycles,
+                'initial_global_cycles': self.refinement.initial_global_cycles},
             'boundary_conditions': {
-                'implementation_types': self.input.bc.implementation_types,
-                'function_names': self.input.bc.function_names,
-                'function_double_arguments': self.input.bc.function_double_arguments},
+                'implementation_types': self.bc.implementation_types,
+                'function_names': self.bc.function_names,
+                'function_double_arguments': self.bc.function_double_arguments},
             'initial_values': {
                 'function_name': iv_function_name,
-                'function_double_arguments': self.input.iv.function_double_arguments},
+                'function_double_arguments': self.iv.function_double_arguments},
             'time': {
-                'semi_implicit_theta': self.input.time.semi_implicit_theta,
-                'time_step': self.input.time.step_size,
+                'semi_implicit_theta': self.time.semi_implicit_theta,
+                'time_step': self.time.step_size,
                 'end_time': end_time},
             'solver': {
-                'tolerance': self.input.solver.tolerance,
-                'normalize_tolerance': self.input.solver.normalize_tolerance
+                'tolerance': self.solver.tolerance,
+                'normalize_tolerance': self.solver.normalize_tolerance
                 }
             }
 

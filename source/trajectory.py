@@ -5,50 +5,53 @@ import matplotlib.pyplot as plt
 import pandas
 import copy
 
-import inputs
-import state as state_module
+import state
+import environment
 import pde
 import body
-import plots
+import plot
 
 
 class Trajectory:
     
     def __init__(self):
-        self.input = inputs.TrajectoryInputs()
+        self.name = 'default'
+        self.time_step_size = 0.02
+        
         self.body = body.Body()
         self.pde = pde.PDE(self.body)
-        self.environment = inputs.EnvironmentInputs()
+        self.environment = environment.Environment()
         
-        self.state = state_module.State()
-        self.state_dot = state_module.State()
+        self.state = state.State()
+        self.state_dot = state.State()
         
-        self.old_state = state_module.State()
+        self.old_state = state.State()
         
         self.step = 0
         self.time = 0.
 
         
     def run_step(self):
-        if not os.path.exists(self.input.name):
-            os.makedirs(self.input.name)
+        if not os.path.exists(self.name):
+            os.makedirs(self.name)
         
         self.old_state = copy.deepcopy(self.state)
     
         self.pde.state_dot = -1*self.state_dot
-        self.pde.input.time.end_time = self.input.time_step_size
+        self.pde.time.end_time = self.time_step_size
         
-        self.pde.solve(self) # @todo: Why does PDE need a Trajectory input?
+        # The PDE solver needs to access many members of self; maybe there's a better way to do this without the circular dependency.
+        self.pde.solve(self)
         
         def increment_data():
-            self.time += self.input.time_step_size
+            self.time += self.time_step_size
             self.step += 1
 
             
         def x_to_state(x):
-            state = state_module.State()
-            position = state.get_position()
-            orientation = state.get_orientation()
+            s = state.State()
+            position = s.get_position()
+            orientation = s.get_orientation()
             
             if x.size == 3:
                 position[:2] = x[:2]
@@ -61,14 +64,14 @@ class Trajectory:
                 position = x[:3]
                 orientation = x[3:]
                 
-            state.set_position(position)
-            state.set_orientation(orientation)
-            return state
+            s.set_position(position)
+            s.set_orientation(orientation)
+            return s
             
             
-        def state_to_x(state, ndof):
-            position = state.get_position()
-            orientation = state.get_orientation()
+        def state_to_x(s, ndof):
+            position = s.get_position()
+            orientation = s.get_orientation()
             
             if ndof == 3:
                 x = np.array([0., 0., 0.])
@@ -85,13 +88,11 @@ class Trajectory:
             
         def objective(x):
             gravity_aligned_axis = 1 # @todo: Generalize the gravity vector
-            state = x_to_state(x)
-            return self.body.get_center_of_gravity(state)[gravity_aligned_axis]
+            return self.body.get_center_of_gravity(x_to_state(x))[gravity_aligned_axis]
            
            
         def constraints(x):
-            state = x_to_state(x)
-            return self.pde.interpolator(self.body.get_hull_points(state))
+            return self.pde.interpolator(self.body.get_hull_points(x_to_state(x)))
 
             
         x0 = state_to_x(self.pde.state, 3)
@@ -110,7 +111,7 @@ class Trajectory:
         # Since the domain will be relatively large compared to the body, and movements should be in small increments.
         # it should suffice to bound the movement relative to a reference length.
 
-        reference_length = self.body.input.reference_length
+        reference_length = self.body.reference_length
         bounds = (
             (0., 0.), # @todo: Enable lateral motion
             (x0[1] - reference_length, x0[1] + reference_length),
@@ -125,27 +126,20 @@ class Trajectory:
         # scipy.minimize likes to return "success" even though constraints are violated.
         constraint_values = constraints(output.x)
         assert(not any(constraint_values < -epsilon)) 
-
-        plot_delta_x =  self.state_dot.get_position()[0]*self.input.time_step_size
-        self.input.plot_xlim[0] = self.input.plot_xlim[0] + plot_delta_x
-        self.input.plot_xlim[1] = self.input.plot_xlim[1] + plot_delta_x
-        plot_delta_y = self.state_dot.get_position()[1]*self.input.time_step_size
-        self.input.plot_ylim[0] = self.input.plot_ylim[0] + plot_delta_y
-        self.input.plot_ylim[1] = self.input.plot_ylim[1] + plot_delta_y
         
         new_pde_state = x_to_state(output.x) 
         delta_state = new_pde_state - self.pde.state
         self.pde.state = new_pde_state
         
-        self.state = self.state + delta_state + self.input.time_step_size*self.state_dot
-        self.state_dot = self.state_dot + (1./self.input.time_step_size)*delta_state
+        self.state = self.state + delta_state + self.time_step_size*self.state_dot
+        self.state_dot = self.state_dot + (1./self.time_step_size)*delta_state
 
         increment_data()
         
         assert(self.pde.state.orientation[0] == 0.) # @todo: Also rotate the frame
-            
-        file_path = self.input.name+'/trajectory_step'+str(self.step)
-        self.plot_frame(file_path)
+        
+        file_path = self.name+'/trajectory_step'+str(self.step)
+        plot.plot_frame(self, file_path)
             
         self.pde.interpolate_old_field = True
         
@@ -153,34 +147,6 @@ class Trajectory:
     def run_steps(self, step_count):
         for step in range(0, step_count):            
             self.run_step()
-
-
-    # @todo: plot frames with ParaView
-
-    def plot_frame(self, file_path):           
-        xi_grid, yi_grid = plots.grid_sample_points(self.pde.data)
-        delta_y = self.state.get_position()[1] - self.pde.state.get_position()[1]
-        ui = self.pde.interpolator(xi_grid, yi_grid - delta_y)
-        plt.xlabel('x')
-        plt.ylabel('y')
-        if self.input.plot_xlim:
-            plt.xlim(self.input.plot_xlim)
-            plt.ylim(self.input.plot_ylim)
-        plt.grid()
-        plt.gca().set_aspect('equal', adjustable='box')
-        cp = plt.contour(xi_grid, yi_grid, ui.reshape(xi_grid.shape),
-                         (0.8*self.environment.temperature,
-                         self.environment.material['melting temperature']),
-                         colors=('k', 'b'))
-        plt.clabel(cp, inline=True, fontsize=10)
-        points = body.close_curve(self.body.get_hull_points(self.old_state))
-        plt.plot(points[:, 0], points[:, 1], '--y', label='Old State')
-        points = body.close_curve(self.body.get_hull_points(self.state))
-        plt.plot(points[:, 0], points[:, 1], '-r', label='Current State')
-        plt.legend()
-        plt.title('Step '+str(self.step))
-        plt.savefig(file_path)
-        plt.cla()
 
 
 if __name__ == "__main__":
