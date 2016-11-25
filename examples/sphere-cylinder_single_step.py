@@ -32,4 +32,4 @@ t.pde.refinement.initial_global_cycles = 5
 t.pde.time.semi_implicit_theta = 1.
 t.pde.time.step_size = 0.2
 
-t.run_step(True)
+t.run_step(True, True, True)

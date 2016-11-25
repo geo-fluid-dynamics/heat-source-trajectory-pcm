@@ -34,7 +34,7 @@ class Trajectory:
         self.max_change = [1., 1., math.pi/8.]
 
         
-    def run_step(self, display_convergence=False):
+    def run_step(self, display_convergence=False, show_x_history=False, plot_x_history=False):
  
         if not os.path.exists(self.name):
             os.makedirs(self.name)
@@ -50,6 +50,10 @@ class Trajectory:
         def increment_data():
             self.time += self.time_step_size
             self.step += 1
+            
+            if show_x_history:
+                print x_history
+            
             file_path = self.name+'/trajectory_step'+str(self.step)
             plot.plot_frame(self, file_path)
 
@@ -91,8 +95,35 @@ class Trajectory:
                 x[3:] = orientation[:]
                 return x
         
+        
+        global minimize_history_index
+        minimize_history_index = 0
+        
+        def make_minimize_history_row(x):
+            global minimize_history_index
+            row = pandas.DataFrame({'x0': x[0], 'x1': x[1], 'x2': x[2]},
+                index=[minimize_history_index])
+            
+            if plot_x_history:
+                ghost_of_self = copy.deepcopy(self)
+                ghost_of_self.state = x_to_state(x)
+                ghost_of_self.pde.state = ghost_of_self.state
+                ghost_of_self.step = minimize_history_index
+                dir_name = self.name+'/x_history/'
+                if not os.path.exists(dir_name):
+                    os.makedirs(dir_name)
+                file_path = dir_name+str(minimize_history_index)
+                plot.plot_frame(ghost_of_self, file_path)
+            
+            minimize_history_index = minimize_history_index + 1 
+            return row
+                
+        global x_history
+        x_history = make_minimize_history_row(state_to_x(self.state, 3))
             
         def objective(x):
+            global x_history
+            x_history = x_history.append(make_minimize_history_row(x))
             gravity_aligned_axis = 1 # @todo: Generalize the gravity vector
             return self.body.get_center_of_gravity(x_to_state(x))[gravity_aligned_axis]
            
